@@ -1,6 +1,7 @@
 package social.friendship.social.friendship.domain
 
 import social.common.ddd.Entity
+import social.common.ddd.Factory
 import social.common.ddd.ID
 
 class Friendship private constructor(val to: String, val from: String) : Entity<Friendship.FriendshipID>(FriendshipID(to, from)) {
@@ -9,7 +10,7 @@ class Friendship private constructor(val to: String, val from: String) : Entity<
      */
     data class FriendshipID(val to: String, val from: String) : ID<Pair<String, String>>(Pair(to, from))
 
-    companion object {
+    companion object : Factory<Friendship> {
         fun of(to: String, from: String): Friendship = Friendship(to, from)
     }
 }
