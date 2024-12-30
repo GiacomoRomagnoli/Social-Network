@@ -1,15 +1,15 @@
 package social.friendship.domain
 
+import org.junit.jupiter.api.Assertions.assertAll
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertAll
-import social.friendship.social.friendship.domain.Friendship
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
+import social.friendship.social.friendship.domain.User
 
 class FriendshipTest {
-    private val from = "user1"
-    private val to = "user2"
+    private val from = User.of("user1")
+    private val to = User.of("user2")
 
     @Test
     fun friendshipCreation() {
