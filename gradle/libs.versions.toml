@@ -20,7 +20,9 @@ archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit-v
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 vertx-web = { module = "io.vertx:vertx-web", version.ref = "vertx" }
 vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx" }
+vertx-kafka-client = { module = "io.vertx:vertx-kafka-client", version.ref = "vertx" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-databind", version = "jackson" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version = "jackson" }
 
 [bundles]
 kotlin-testing = [ "kotest-junit5-jvm", "kotest-assertions-core-jvm", "mockito-core" ]
