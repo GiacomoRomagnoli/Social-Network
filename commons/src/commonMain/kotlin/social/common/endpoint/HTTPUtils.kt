@@ -5,6 +5,9 @@ import kotlin.js.JsExport
 @JsExport
 object Endpoint {
     const val USER = "/app/user"
+    const val FRIENDSHIP = "/app/friendship"
+    const val FRIENDSHIP_REQUEST = "/app/friendship-request"
+    const val MESSAGE = "/app/message"
 }
 
 @JsExport
