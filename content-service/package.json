@@ -8,6 +8,8 @@
     "dev": "nodemon --exec ts-node src/main/typescript/main.ts"
   },
   "devDependencies": {
+    "ts-jest": "^29.2.5",
+    "@jest/globals": "^29.7.0",
     "typescript": "^5.7.2",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2"
