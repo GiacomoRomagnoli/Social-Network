@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  friendship-sql-repository:
+    image: mysql:latest
+    container_name: friendship-sql-repository
+    environment:
+      - MYSQL_ROOT_PASSWORD=__ROOT_PASSWORD__
+      - MYSQL_DATABASE=__DB_NAME__
+      - MYSQL_USER=__USER__
+      - MYSQL_PASSWORD=__PASSWORD__
+    ports:
+      - "3306:3306"
+    volumes:
+      - friendship-sql-data:/var/lib/mysql
+      - ./__INIT_SQL_FILE__:/docker-entrypoint-initdb.d/__INIT_SQL_FILE__
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  friendship-sql-data:
+    driver: local
