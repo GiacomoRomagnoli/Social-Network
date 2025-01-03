@@ -22,6 +22,17 @@ class FriendshipTest {
     }
 
     @Test
+    fun friendshipCreationUsingFriendshipRequest() {
+        val friendshipRequest = FriendshipRequest.of(to, from)
+        val friendship = Friendship.of(friendshipRequest)
+
+        assertAll(
+            { assertEquals(from, friendship.from) },
+            { assertEquals(to, friendship.to) }
+        )
+    }
+
+    @Test
     fun testEqualsIfSameIdentifier() {
         val friendship1 = Friendship.of(to, from)
         val friendship2 = Friendship.of(to, from)
