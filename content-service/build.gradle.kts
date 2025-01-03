@@ -1,6 +1,6 @@
 import com.lordcodes.turtle.shellRun
 import io.github.zuccherosintattico.gradle.BuildCommandExecutable
-import io.github.zuccherosintattico.utils.NodeCommandsExtension.npmCommand
+import io.github.zuccherosintattico.utils.NodeCommandsExtension.nodeCommand
 
 plugins {
     alias(libs.plugins.typescript.gradle.plugin)
@@ -25,7 +25,7 @@ tasks.named("check") {
     doLast {
         runCatching {
             shellRun(project.projectDir) {
-                npmCommand(project, "run", "type-checking")
+                nodeCommand(project, "node_modules/typescript/bin/tsc", "--noEmit")
             }
         }
             .onFailure { logger.error(it.stackTraceToString()) }
