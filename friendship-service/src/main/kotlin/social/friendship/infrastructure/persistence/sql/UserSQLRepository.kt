@@ -5,7 +5,7 @@ import social.friendship.social.friendship.domain.User
 import social.friendship.social.friendship.domain.User.UserID
 import java.sql.PreparedStatement
 
-class UserSQLRepository: Repository<UserID, User>, AbstractSQLRepository() {
+class UserSQLRepository : Repository<UserID, User>, AbstractSQLRepository() {
     override fun findById(id: UserID): User? {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,

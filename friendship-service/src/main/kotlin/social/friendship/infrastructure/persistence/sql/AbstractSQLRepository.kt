@@ -10,10 +10,10 @@ abstract class AbstractSQLRepository {
     fun connect(host: String, port: String, database: String, username: String, password: String) {
         logger.trace(
             "Connecting to database with credentials:\n" +
-                    "host={},\n" +
-                    "port={},\n" +
-                    "database={},\n" +
-                    "username={}",
+                "host={},\n" +
+                "port={},\n" +
+                "database={},\n" +
+                "username={}",
             host, port, database, username
         )
         connection = SQLUtils.mySQLConnection(host, port, database, username, password)
