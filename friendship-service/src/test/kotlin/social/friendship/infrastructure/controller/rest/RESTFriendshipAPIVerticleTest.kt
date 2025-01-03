@@ -189,8 +189,8 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     fun getFriendshipRequestWithoutUsersParam() {
         val latch = CountDownLatch(1)
 
-        val response1 = sendGetRequest("to", friendship.to.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
-        val response2 = sendGetRequest("from", friendship.from.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
+        val response1 = sendGetRequest("to", friendshipRequest.to.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
+        val response2 = sendGetRequest("from", friendshipRequest.from.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
 
         latch.await()
         assertAll(
