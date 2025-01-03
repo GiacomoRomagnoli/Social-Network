@@ -1,19 +1,37 @@
 import {social} from "../commons-lib";
 import AggregateRoot = social.common.ddd.AggregateRoot;
 import ID = social.common.ddd.ID;
+import Entity = social.common.ddd.Entity;
+
+export interface User {
+    readonly userName: string;
+    readonly email: string;
+    readonly id: ID<string>;
+}
+
+class UserImpl extends Entity<ID<string>> implements User {
+    readonly userName: string;
+    readonly email: string;
+
+    constructor(userName: string, email: string) {
+        super(new ID(email))
+        this.userName = userName;
+        this.email = email;
+    }
+}
 
 export interface Post {
-    readonly author: string;
+    readonly author: User;
     readonly content: string;
     readonly id: ID<number>;
     contains(keyword: string): boolean;
 }
 
 class PostImpl extends AggregateRoot<ID<number>> implements Post {
-    readonly author: string;
+    readonly author: User;
     readonly content: string;
 
-    constructor(author: string, content: string, id: number) {
+    constructor(author: User, content: string, id: number) {
         super(new ID(id));
         this.author = author;
         this.content = content;
@@ -50,8 +68,8 @@ class FeedImpl extends AggregateRoot<ID<string>> implements Feed {
 
 // Factory methods
 
-export function postOf(author: string, content: string, id: number): Post {
-    return new PostImpl(author, content, id);
+export function postOf(authorName: string, authorEmail: string, content: string, id: number): Post {
+    return new PostImpl(new UserImpl(authorName, authorEmail), content, id);
 }
 
 export function feedFrom(owner: string, ...posts: Post[]): Feed {

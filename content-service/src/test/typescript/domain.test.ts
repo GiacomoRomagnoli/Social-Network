@@ -4,11 +4,12 @@ import {social} from "../../main/typescript/commons-lib";
 import ID = social.common.ddd.ID;
 
 describe("domain module", () => {
-    let post = postOf("example@mail.com", "my first post!", 0);
-    let feed = feedOf("example@mail.com", [post, postOf("friend@mail.com", "another post", 1)])
+    let post = postOf("example", "example@mail.com", "my first post!", 0);
+    let feed = feedOf("example@mail.com", [post, postOf("friend", "friend@mail.com", "another post", 1)])
 
     test("postOf creates a Post", () => {
-        expect(post.author).toBe("example@mail.com")
+        expect(post.author.userName).toBe("example")
+        expect(post.author.email).toBe("example@mail.com")
         expect(post.content).toBe("my first post!")
         expect(post.id).toStrictEqual(new ID(0))
     });
@@ -23,7 +24,7 @@ describe("domain module", () => {
     });
 
     test("feedFrom creates a Feed", () => {
-        let feed2 = feedFrom("friend@mail.com", post, postOf("example@mail.com", "another one", 2))
+        let feed2 = feedFrom("friend@mail.com", post, postOf("example", "example@mail.com", "another one", 2))
         expect(feed2.id).toStrictEqual(new ID("friend@mail.com"))
         expect(feed2.posts.length).toBe(2)
     });
