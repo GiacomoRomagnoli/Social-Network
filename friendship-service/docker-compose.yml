@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  friendship-sql-repository:
+    image: mysql:latest
+    container_name: friendship-sql-repository
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: friendship
+      MYSQL_USER: user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      DB_HOST: friendship-sql-repository
+      DB_PORT: 3306
+    ports:
+      - "3306:3306"
+    volumes:
+      - friendship-sql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - db_root_password
+      - db_password
+    networks:
+      - app-network
+
+  friendship-service:
+    image: friendship-service:latest
+    container_name: friendship-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      friendship-sql-repository:
+        condition: service_healthy
+    environment:
+      MYSQL_DATABASE: friendship
+      MYSQL_USER: user
+      DB_HOST: friendship-sql-repository
+      DB_PORT: 3306
+    secrets:
+      - db_root_password
+      - db_password
+    networks:
+      - app-network
+
+secrets:
+  db_root_password:
+    file: ./db-root-password.txt
+  db_password:
+    file: ./db-password.txt
+
+volumes:
+  friendship-sql-data: {}
+
+networks:
+  app-network:
+    driver: bridge
