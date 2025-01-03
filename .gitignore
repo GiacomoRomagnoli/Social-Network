@@ -6,3 +6,5 @@ bin
 node_modules/
 *.js
 commons-lib/
+db-password.txt
+db-root-password.txt
