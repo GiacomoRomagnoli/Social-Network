@@ -140,7 +140,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     fun addFriendshipRequestWithoutUsers() {
         val latch = CountDownLatch(1)
 
-        val friendshipJsonString = mapper.writeValueAsString(friendship)
+        val friendshipJsonString = mapper.writeValueAsString(friendshipRequest)
         val friendshipJson = JsonObject(friendshipJsonString)
 
         val response = sendPostRequest(friendshipJson, latch, Endpoint.FRIENDSHIP_REQUEST)
