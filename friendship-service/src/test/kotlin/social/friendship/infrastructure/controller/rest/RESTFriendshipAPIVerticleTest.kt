@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Timeout
 import social.common.endpoint.Endpoint
 import social.common.endpoint.StatusCode
 import social.friendship.domain.Friendship
+import social.friendship.domain.FriendshipRequest
+import social.friendship.domain.Message
 import social.friendship.infrastructure.DockerSQLTest
 import social.friendship.social.friendship.domain.User
 import social.friendship.social.friendship.infrastructure.persistence.sql.DatabaseCredentials
@@ -31,6 +33,8 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private val user1 = User.of("user1ID")
     private val user2 = User.of("user2ID")
     private val friendship = Friendship.of(user1, user2)
+    private val friendshipRequest = FriendshipRequest.of(user1, user2)
+    private val message = Message.of(friendship, "message")
     private lateinit var webClient: WebClient
     private lateinit var dockerComposeFile: File
     private val api = RESTFriendshipAPIVerticle(DatabaseCredentials(host, port, database, user, password))
@@ -149,6 +153,20 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertEquals(StatusCode.FORBIDDEN, response.statusCode())
     }
 
+    @Timeout(60)
+    @Test
+    fun addMessageWithoutFriendship() {
+        val latch = CountDownLatch(1)
+
+        val messageJsonString = mapper.writeValueAsString(message)
+        val messageJson = JsonObject(messageJsonString)
+
+        val response = sendPostRequest(messageJson, latch, Endpoint.MESSAGE)
+
+        latch.await()
+        assertEquals(StatusCode.FORBIDDEN, response.statusCode())
+    }
+
     private fun sendGetRequest(paramName: String, paramValue: String, latch: CountDownLatch, endpoint: String): HttpResponse<String> {
         val responseLatch = CountDownLatch(1)
         lateinit var response: HttpResponse<String>
@@ -196,6 +214,23 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertAll(
             { assertEquals(StatusCode.BAD_REQUEST, response1.statusCode()) },
             { assertEquals(StatusCode.BAD_REQUEST, response2.statusCode()) }
+        )
+    }
+
+    @Timeout(60)
+    @Test
+    fun getMessageWithoutUserAndIDParam() {
+        val latch = CountDownLatch(1)
+
+        val response1 = sendGetRequest("to", message.friendship.to.id.value, latch, Endpoint.MESSAGE)
+        val response2 = sendGetRequest("from", message.friendship.from.id.value, latch, Endpoint.MESSAGE)
+        val response3 = sendGetRequest("id", message.id.value.toString(), latch, Endpoint.MESSAGE)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.BAD_REQUEST, response1.statusCode()) },
+            { assertEquals(StatusCode.BAD_REQUEST, response2.statusCode()) },
+            { assertEquals(StatusCode.BAD_REQUEST, response3.statusCode()) }
         )
     }
 }
