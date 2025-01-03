@@ -17,6 +17,8 @@ import social.common.endpoint.StatusCode
 import social.common.events.FriendshipRequestAccepted
 import social.friendship.domain.Friendship
 import social.friendship.domain.Friendship.FriendshipID
+import social.friendship.domain.FriendshipRequest
+import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.infrastructure.controller.event.KafkaFriendshipProducer
 import social.friendship.social.friendship.domain.User
 import social.friendship.social.friendship.domain.application.FriendshipService
@@ -38,6 +40,7 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
     private val friendshipRepository = FriendshipSQLRepository()
     private val friendshipRequestRepository = FriendshipRequestSQLRepository()
     private val friendshipService: FriendshipService<FriendshipID, Friendship> = FriendshipServiceImpl(friendshipRepository)
+    private val friendshipRequestService: FriendshipService<FriendshipRequestID, FriendshipRequest> = FriendshipServiceImpl(friendshipRequestRepository)
     private lateinit var producer: KafkaProducer<String, String>
     private val mapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
@@ -107,6 +110,8 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
 
         router.post(Endpoint.FRIENDSHIP).handler(::addFriendship)
         router.get(Endpoint.FRIENDSHIP).handler(::getFriendship)
+        router.post(Endpoint.FRIENDSHIP_REQUEST).handler(::addFriendshipRequest)
+        router.get(Endpoint.FRIENDSHIP_REQUEST).handler(::getFriendshipRequest)
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -165,6 +170,62 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
                 sendResponse(ctx, StatusCode.OK, it.result().toString())
             } else {
                 logger.warn("failed to get friendship:", it.cause())
+                sendErrorResponse(ctx, it.cause())
+            }
+        }
+    }
+
+    private fun addFriendshipRequest(ctx: RoutingContext) {
+        vertx.executeBlocking(
+            Callable {
+                val requestBody = ctx.body().asJsonObject()
+                logger.debug("Received POST request with body: '{}'", requestBody)
+
+                val requestedUserToID: String = requestBody.getString("to") ?: throw IllegalArgumentException("friendship request 'to' is required")
+                val requestedUserFromID: String = requestBody.getString("from") ?: throw IllegalArgumentException("friendship request 'from' is required")
+
+                val userTo = User.of(requestedUserToID)
+                val userFrom = User.of(requestedUserFromID)
+
+                val friendshipRequest = FriendshipRequest.of(userTo, userFrom)
+                friendshipRequestService.add(friendshipRequest)
+
+                val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest)
+                producer.write(KafkaProducerRecord.create(FriendshipRequestAccepted.TOPIC, friendshipRequestJsonString))
+            }
+        ).onComplete {
+            if (it.succeeded()) {
+                logger.trace("friendship request added successfully")
+                sendResponse(ctx, StatusCode.CREATED)
+            } else {
+                logger.warn("failed to add friendship request:", it.cause())
+                sendErrorResponse(ctx, it.cause())
+            }
+        }
+    }
+
+    private fun getFriendshipRequest(ctx: RoutingContext) {
+        vertx.executeBlocking(
+            Callable {
+                val requestedUserToID = ctx.request().getParam("to") ?: throw IllegalArgumentException("friendship request 'to' is required")
+                val requestedUserFromID = ctx.request().getParam("from") ?: throw IllegalArgumentException("friendship request 'from' is required")
+                logger.debug("Received GET request: 'to': '{}' and 'from': '{}'", requestedUserToID, requestedUserFromID)
+
+                val userTo = User.of(requestedUserToID)
+                val userFrom = User.of(requestedUserFromID)
+                val friendshipRequestToCheckExistenceOf = FriendshipRequest.of(userTo, userFrom)
+
+                val friendshipRequestRetrieved = friendshipRequestService.getById(friendshipRequestToCheckExistenceOf.id) ?: throw IllegalStateException("friendship request not found")
+                logger.trace("friendship request retrieved: '{}'", friendshipRequestRetrieved)
+
+                mapper.writeValueAsString(friendshipRequestRetrieved)
+            }
+        ).onComplete {
+            if (it.succeeded()) {
+                logger.trace("friendship request retrieved successfully")
+                sendResponse(ctx, StatusCode.OK, it.result().toString())
+            } else {
+                logger.warn("failed to get friendship request:", it.cause())
                 sendErrorResponse(ctx, it.cause())
             }
         }
