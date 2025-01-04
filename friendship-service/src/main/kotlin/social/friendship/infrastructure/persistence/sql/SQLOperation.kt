@@ -81,11 +81,5 @@ object SQLOperation {
             DELETE FROM user
             WHERE id = ?
             """
-        const val UPDATE_FRIENDSHIP_REQUEST =
-            """
-            UPDATE friendship_request
-            SET user_to = ?, user_from = ?
-            WHERE user_to = ? AND user_from = ?
-            """
     }
 }
