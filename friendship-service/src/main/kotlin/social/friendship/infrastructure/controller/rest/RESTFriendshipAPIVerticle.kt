@@ -252,27 +252,32 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
     private fun getMessage(ctx: RoutingContext) {
         vertx.executeBlocking(
             Callable {
-                val requestedUserToID = ctx.request().getParam("to") ?: throw IllegalArgumentException("message 'to' is required, because messages can be exchanged only if a friendship is present")
-                val requestedUserFromID = ctx.request().getParam("from") ?: throw IllegalArgumentException("message 'from' is required, because messages can be exchanged only if a friendship is present")
-                val requestedMessageID = ctx.request().getParam("id") ?: throw IllegalArgumentException("message 'id' is required")
-                logger.debug("Received GET request: 'to': '{}', 'from': '{}', 'id': '{}'", requestedUserToID, requestedUserFromID, requestedMessageID)
+                if (ctx.request().params().isEmpty) {
+                    val messagesRetrieved = messageService.getAll()
+                    logger.trace("messages retrieved: '{}'", messagesRetrieved)
+                    mapper.writeValueAsString(messagesRetrieved)
+                } else {
+                    val requestedUserToID = ctx.request().getParam("to") ?: throw IllegalArgumentException("message 'to' is required, because messages can be exchanged only if a friendship is present")
+                    val requestedUserFromID = ctx.request().getParam("from") ?: throw IllegalArgumentException("message 'from' is required, because messages can be exchanged only if a friendship is present")
+                    val requestedMessageID = ctx.request().getParam("id") ?: throw IllegalArgumentException("message 'id' is required")
+                    logger.debug("Received GET request: 'to': '{}', 'from': '{}', 'id': '{}'", requestedUserToID, requestedUserFromID, requestedMessageID)
 
-                val userTo = User.of(requestedUserToID)
-                val userFrom = User.of(requestedUserFromID)
-                val friendship = Friendship.of(userTo, userFrom)
-                val messageToCheckExistenceOf = Message.of(friendship, requestedMessageID)
+                    val userTo = User.of(requestedUserToID)
+                    val userFrom = User.of(requestedUserFromID)
+                    val friendship = Friendship.of(userTo, userFrom)
+                    val messageToCheckExistenceOf = Message.of(friendship, requestedMessageID)
 
-                val messageRetrieved = messageService.getById(messageToCheckExistenceOf.id) ?: throw IllegalStateException("message not found")
-                logger.trace("message retrieved: '{}'", messageRetrieved)
-
-                mapper.writeValueAsString(messageRetrieved)
+                    val messageRetrieved = messageService.getById(messageToCheckExistenceOf.id) ?: throw IllegalStateException("message not found")
+                    logger.trace("message retrieved: '{}'", messageRetrieved)
+                    mapper.writeValueAsString(messageRetrieved)
+                }
             }
         ).onComplete {
             if (it.succeeded()) {
-                logger.trace("message retrieved successfully")
+                logger.trace("messages retrieved successfully")
                 sendResponse(ctx, StatusCode.OK, it.result().toString())
             } else {
-                logger.warn("failed to get message:", it.cause())
+                logger.warn("failed to get messages:", it.cause())
                 sendErrorResponse(ctx, it.cause())
             }
         }

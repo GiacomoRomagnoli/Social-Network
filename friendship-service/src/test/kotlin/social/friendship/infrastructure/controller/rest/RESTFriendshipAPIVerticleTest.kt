@@ -38,7 +38,9 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private val user2 = User.of("user2ID")
     private val friendship = Friendship.of(user1, user2)
     private val friendshipRequest = FriendshipRequest.of(user1, user2)
-    private val message = Message.of(friendship, "message")
+    private val message1 = Message.of(friendship, "message")
+    private val message2 = Message.of(friendship, "message2")
+    private val message3 = Message.of(friendship, "message3")
     private lateinit var webClient: WebClient
     private lateinit var dockerComposeFile: File
     private val userRepository = UserSQLRepository()
@@ -173,7 +175,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     fun addMessageWithoutFriendship() {
         val latch = CountDownLatch(1)
 
-        val messageJsonString = mapper.writeValueAsString(message)
+        val messageJsonString = mapper.writeValueAsString(message1)
         val messageJson = JsonObject(messageJsonString)
 
         val response = sendPostRequest(messageJson, latch, Endpoint.MESSAGE)
@@ -230,7 +232,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         friendshipRequestRepository.save(friendshipRequest)
         friendshipRepository.save(friendship)
 
-        val messageJsonString = mapper.writeValueAsString(message)
+        val messageJsonString = mapper.writeValueAsString(message1)
         val messageJson = JsonObject(messageJsonString)
 
         val response = sendPostRequest(messageJson, latch, Endpoint.MESSAGE)
@@ -244,6 +246,25 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         lateinit var response: HttpResponse<String>
         webClient.get(endpoint)
             .addQueryParam(paramName, paramValue)
+            .putHeader("content-type", "application/json")
+            .`as`(BodyCodec.string())
+            .send { ar ->
+                latch.countDown()
+                if (ar.succeeded()) {
+                    response = ar.result()
+                } else {
+                    throw ar.cause()
+                }
+                responseLatch.countDown()
+            }
+        responseLatch.await()
+        return response
+    }
+
+    private fun sendGetRequest(latch: CountDownLatch, endpoint: String): HttpResponse<String> {
+        val responseLatch = CountDownLatch(1)
+        lateinit var response: HttpResponse<String>
+        webClient.get(endpoint)
             .putHeader("content-type", "application/json")
             .`as`(BodyCodec.string())
             .send { ar ->
@@ -294,15 +315,41 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     fun getMessageWithoutUserAndIDParam() {
         val latch = CountDownLatch(1)
 
-        val response1 = sendGetRequest("to", message.friendship.to.id.value, latch, Endpoint.MESSAGE)
-        val response2 = sendGetRequest("from", message.friendship.from.id.value, latch, Endpoint.MESSAGE)
-        val response3 = sendGetRequest("id", message.id.value.toString(), latch, Endpoint.MESSAGE)
+        val response1 = sendGetRequest("to", message1.friendship.to.id.value, latch, Endpoint.MESSAGE)
+        val response2 = sendGetRequest("from", message1.friendship.from.id.value, latch, Endpoint.MESSAGE)
+        val response3 = sendGetRequest("id", message1.id.value.toString(), latch, Endpoint.MESSAGE)
 
         latch.await()
         assertAll(
             { assertEquals(StatusCode.BAD_REQUEST, response1.statusCode()) },
             { assertEquals(StatusCode.BAD_REQUEST, response2.statusCode()) },
             { assertEquals(StatusCode.BAD_REQUEST, response3.statusCode()) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getAllMessages() {
+        val latch = CountDownLatch(1)
+
+        // adds users, friendship request, friendship and message to the database to be able to get all messages
+        userRepository.save(user1)
+        userRepository.save(user2)
+        friendshipRequestRepository.save(friendshipRequest)
+        friendshipRepository.save(friendship)
+        messageRepository.save(message1)
+        messageRepository.save(message2)
+        messageRepository.save(message3)
+
+        val response = sendGetRequest(latch, Endpoint.MESSAGE)
+
+        val actual = mapper.readValue(response.body(), Array<Message>::class.java)
+        val expected = arrayOf(message1, message2, message3)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.OK, response.statusCode()) },
+            { assertEquals(actual.size, expected.size) }
         )
     }
 }
