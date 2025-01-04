@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import social.friendship.social.friendship.domain.User
 
 class FriendshipRequestTest {
@@ -53,5 +54,12 @@ class FriendshipRequestTest {
         val friendshipRequest2 = FriendshipRequest.of(to, from)
 
         assertEquals(friendshipRequest1.hashCode(), friendshipRequest2.hashCode())
+    }
+
+    @Test
+    fun cannotCreateFriendshipRequestToItself() {
+        assertThrows<IllegalArgumentException> {
+            FriendshipRequest.of(from, from)
+        }
     }
 }

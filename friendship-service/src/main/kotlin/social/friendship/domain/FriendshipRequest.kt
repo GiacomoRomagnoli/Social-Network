@@ -23,6 +23,11 @@ class FriendshipRequest private constructor(
     ) : ID<Pair<UserID, UserID>>(Pair(to, from))
 
     companion object : Factory<FriendshipRequest> {
-        fun of(to: User, from: User): FriendshipRequest = FriendshipRequest(to, from)
+        fun of(to: User, from: User): FriendshipRequest {
+            if (to == from) {
+                throw IllegalArgumentException("User cannot send a friendship request to itself")
+            }
+            return FriendshipRequest(to, from)
+        }
     }
 }
