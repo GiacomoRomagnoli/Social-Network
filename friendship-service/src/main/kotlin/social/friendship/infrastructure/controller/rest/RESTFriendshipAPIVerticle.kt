@@ -1,6 +1,7 @@
 package social.friendship.infrastructure.controller.rest
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.vertx.core.AbstractVerticle
@@ -70,7 +71,7 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
 
         private fun sendErrorResponse(ctx: RoutingContext, error: Throwable) {
             when (error) {
-                is IllegalArgumentException -> sendResponse(ctx, StatusCode.BAD_REQUEST, error.message)
+                is IllegalArgumentException, is MismatchedInputException -> sendResponse(ctx, StatusCode.BAD_REQUEST, error.message)
                 is IllegalStateException -> sendResponse(ctx, StatusCode.NOT_FOUND, error.message)
                 is SQLIntegrityConstraintViolationException -> sendResponse(ctx, StatusCode.FORBIDDEN, error.message)
                 is SQLException -> sendResponse(ctx, StatusCode.INTERNAL_SERVER_ERROR, error.message)
@@ -128,17 +129,10 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
     private fun addFriendship(ctx: RoutingContext) {
         vertx.executeBlocking(
             Callable {
-                val requestBody = ctx.body().asJsonObject()
+                val requestBody = ctx.body().asString()
                 logger.debug("Received POST request with body: '{}'", requestBody)
 
-                val requestedUserToID: String = requestBody.getString("to") ?: throw IllegalArgumentException("friendship 'to' is required")
-                val requestedUserFromID: String = requestBody.getString("from") ?: throw IllegalArgumentException("friendship 'from' is required")
-
-                val userTo = User.of(requestedUserToID)
-                val userFrom = User.of(requestedUserFromID)
-
-                logger.trace("about to add friendship")
-                val friendship = Friendship.of(userTo, userFrom)
+                val friendship: Friendship = mapper.readValue(requestBody, Friendship::class.java)
                 friendshipService.add(friendship)
 
                 val friendshipJsonString = mapper.writeValueAsString(friendship)
@@ -185,16 +179,10 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
     private fun addFriendshipRequest(ctx: RoutingContext) {
         vertx.executeBlocking(
             Callable {
-                val requestBody = ctx.body().asJsonObject()
+                val requestBody = ctx.body().asString()
                 logger.debug("Received POST request with body: '{}'", requestBody)
 
-                val requestedUserToID: String = requestBody.getString("to") ?: throw IllegalArgumentException("friendship request 'to' is required")
-                val requestedUserFromID: String = requestBody.getString("from") ?: throw IllegalArgumentException("friendship request 'from' is required")
-
-                val userTo = User.of(requestedUserToID)
-                val userFrom = User.of(requestedUserFromID)
-
-                val friendshipRequest = FriendshipRequest.of(userTo, userFrom)
+                val friendshipRequest: FriendshipRequest = mapper.readValue(requestBody, FriendshipRequest::class.java)
                 friendshipRequestService.add(friendshipRequest)
 
                 val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest)
@@ -241,19 +229,10 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
     private fun addMessage(ctx: RoutingContext) {
         vertx.executeBlocking(
             Callable {
-                val requestBody = ctx.body().asJsonObject()
+                val requestBody = ctx.body().asString()
                 logger.debug("Received POST request: '{}'", requestBody)
 
-                val friendshipJson = requestBody.getJsonObject("friendship") ?: throw IllegalArgumentException("friendship is required")
-                val requestedUserToID: String = friendshipJson.getString("to") ?: throw IllegalArgumentException("friendship 'to' is required")
-                val requestedUserFromID: String = friendshipJson.getString("from") ?: throw IllegalArgumentException("friendship 'from' is required")
-                val requestedMessageContent: String = requestBody.getString("content") ?: throw IllegalArgumentException("message 'content' is required")
-
-                val userTo = User.of(requestedUserToID)
-                val userFrom = User.of(requestedUserFromID)
-                val friendship = Friendship.of(userTo, userFrom)
-
-                val message = Message.of(friendship, requestedMessageContent)
+                val message: Message = mapper.readValue(requestBody, Message::class.java)
                 messageService.add(message)
 
                 val messageJsonString = mapper.writeValueAsString(message)
