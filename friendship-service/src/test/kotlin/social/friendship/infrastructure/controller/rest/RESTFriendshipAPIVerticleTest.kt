@@ -24,6 +24,10 @@ import social.friendship.domain.Message
 import social.friendship.infrastructure.DockerSQLTest
 import social.friendship.social.friendship.domain.User
 import social.friendship.social.friendship.infrastructure.persistence.sql.DatabaseCredentials
+import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
+import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
+import social.friendship.social.friendship.infrastructure.persistence.sql.MessageSQLRepository
+import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import kotlin.test.assertEquals
@@ -37,6 +41,10 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private val message = Message.of(friendship, "message")
     private lateinit var webClient: WebClient
     private lateinit var dockerComposeFile: File
+    private val userRepository = UserSQLRepository()
+    private val friendshipRequestRepository = FriendshipRequestSQLRepository()
+    private val friendshipRepository = FriendshipSQLRepository()
+    private val messageRepository = MessageSQLRepository()
     private val api = RESTFriendshipAPIVerticle(DatabaseCredentials(host, port, database, user, password))
     private val mapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
@@ -55,6 +63,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         val vertx = Vertx.vertx()
         startRESTFriendshipAPIVerticle(vertx)
         createTestWebClient(vertx)
+        connectToDatabase()
     }
 
     private fun startRESTFriendshipAPIVerticle(vertx: Vertx) {
@@ -72,6 +81,12 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
 
     private fun createTestWebClient(vertx: Vertx) {
         webClient = WebClient.create(vertx, WebClientOptions().setDefaultPort(8080).setDefaultHost("localhost"))
+    }
+
+    private fun connectToDatabase() {
+        listOf(userRepository, friendshipRequestRepository, friendshipRepository, messageRepository).forEach {
+            it.connect(host, port, database, user, password)
+        }
     }
 
     @AfterEach
@@ -165,6 +180,63 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
 
         latch.await()
         assertEquals(StatusCode.FORBIDDEN, response.statusCode())
+    }
+
+    @Timeout(60)
+    @Test
+    fun addFriendshipAboutExistingUsers() {
+        val latch = CountDownLatch(1)
+
+        // adds users and friendship request to the database to be able to add a friendship
+        userRepository.save(user1)
+        userRepository.save(user2)
+        friendshipRequestRepository.save(friendshipRequest)
+
+        val friendshipJsonString = mapper.writeValueAsString(friendship)
+        val friendshipJson = JsonObject(friendshipJsonString)
+
+        val response = sendPostRequest(friendshipJson, latch, Endpoint.FRIENDSHIP)
+
+        latch.await()
+        assertEquals(StatusCode.CREATED, response.statusCode())
+    }
+
+    @Timeout(60)
+    @Test
+    fun addFriendshipRequestAboutExistingUsers() {
+        val latch = CountDownLatch(1)
+
+        // adds users to the database to be able to add a friendship request
+        userRepository.save(user1)
+        userRepository.save(user2)
+
+        val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest)
+        val friendshipRequestJson = JsonObject(friendshipRequestJsonString)
+
+        val response = sendPostRequest(friendshipRequestJson, latch, Endpoint.FRIENDSHIP_REQUEST)
+
+        latch.await()
+        assertEquals(StatusCode.CREATED, response.statusCode())
+    }
+
+    @Timeout(60)
+    @Test
+    fun addMessageAboutExistingFriendship() {
+        val latch = CountDownLatch(1)
+
+        // adds users, friendship request and friendship to the database to be able to add a message
+        userRepository.save(user1)
+        userRepository.save(user2)
+        friendshipRequestRepository.save(friendshipRequest)
+        friendshipRepository.save(friendship)
+
+        val messageJsonString = mapper.writeValueAsString(message)
+        val messageJson = JsonObject(messageJsonString)
+
+        val response = sendPostRequest(messageJson, latch, Endpoint.MESSAGE)
+
+        latch.await()
+        assertEquals(StatusCode.CREATED, response.statusCode())
     }
 
     private fun sendGetRequest(paramName: String, paramValue: String, latch: CountDownLatch, endpoint: String): HttpResponse<String> {
