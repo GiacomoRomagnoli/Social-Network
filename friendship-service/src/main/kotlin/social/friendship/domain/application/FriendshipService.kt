@@ -9,6 +9,7 @@ interface FriendshipService<I : ID<*>, E : Entity<*>> : Service {
     fun add(entity: E)
     fun getById(id: I): E?
     fun deleteById(id: I): E?
+    fun getAll(): Array<E>
 }
 
 class FriendshipServiceImpl<I : ID<*>, E : Entity<*>>(private val repository: Repository<I, E>) : FriendshipService<I, E> {
@@ -17,4 +18,6 @@ class FriendshipServiceImpl<I : ID<*>, E : Entity<*>>(private val repository: Re
     override fun getById(id: I): E? = repository.findById(id)
 
     override fun deleteById(id: I): E? = repository.deleteById(id)
+
+    override fun getAll(): Array<E> = repository.findAll()
 }
