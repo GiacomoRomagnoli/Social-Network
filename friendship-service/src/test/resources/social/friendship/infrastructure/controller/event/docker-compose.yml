@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  friendship-sql-repository:
+    image: mysql:latest
+    container_name: friendship-sql-repository
+    environment:
+      - MYSQL_ROOT_PASSWORD=__ROOT_PASSWORD__
+      - MYSQL_DATABASE=__DB_NAME__
+      - MYSQL_USER=__USER__
+      - MYSQL_PASSWORD=__PASSWORD__
+    ports:
+      - "3307:3306"
+    volumes:
+      - friendship-sql-data:/var/lib/mysql
+      - ./__INIT_SQL_FILE__:/docker-entrypoint-initdb.d/__INIT_SQL_FILE__
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - social-network
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      friendship-sql-repository:
+        condition: service_healthy
+    networks:
+      - social-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  friendship-sql-data:
+    driver: local
+
+networks:
+  social-network:
+    driver: bridge
