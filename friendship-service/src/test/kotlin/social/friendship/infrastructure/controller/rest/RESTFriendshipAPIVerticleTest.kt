@@ -345,9 +345,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         userRepository.save(user2)
         friendshipRequestRepository.save(friendshipRequest1)
         friendshipRepository.save(friendship1)
-        messageRepository.save(message1)
-        messageRepository.save(message2)
-        messageRepository.save(message3)
+        listOf(message1, message2, message3).forEach { messageRepository.save(it) }
 
         val response = sendGetRequest(latch, Endpoint.MESSAGE)
 
