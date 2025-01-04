@@ -158,22 +158,15 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
 
                     mapper.writeValueAsString(friendshipsRetrieved)
                 } else {
-                    val requestedUserToID =
-                        ctx.request().getParam("to") ?: throw IllegalArgumentException("friendship 'to' is required")
-                    val requestedUserFromID = ctx.request().getParam("from")
-                        ?: throw IllegalArgumentException("friendship 'from' is required")
-                    logger.debug(
-                        "Received GET request with 'to': '{}' and 'from': '{}'",
-                        requestedUserToID,
-                        requestedUserFromID
-                    )
+                    val requestedUserToID = ctx.request().getParam("to") ?: throw IllegalArgumentException("friendship 'to' is required")
+                    val requestedUserFromID = ctx.request().getParam("from") ?: throw IllegalArgumentException("friendship 'from' is required")
+                    logger.debug("Received GET request with 'to': '{}' and 'from': '{}'", requestedUserToID, requestedUserFromID)
 
                     val userTo = User.of(requestedUserToID)
                     val userFrom = User.of(requestedUserFromID)
                     val friendshipToCheckExistenceOf = Friendship.of(userTo, userFrom)
 
-                    val friendshipRetrieved = friendshipService.getById(friendshipToCheckExistenceOf.id)
-                        ?: throw IllegalStateException("friendship not found")
+                    val friendshipRetrieved = friendshipService.getById(friendshipToCheckExistenceOf.id) ?: throw IllegalStateException("friendship not found")
                     logger.trace("friendship retrieved: '{}'", friendshipRetrieved)
 
                     mapper.writeValueAsString(friendshipRetrieved)
