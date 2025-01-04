@@ -16,8 +16,8 @@ abstract class DockerSQLTest : DockerTest() {
      *
      * @return the generated init.sql file
      */
-    fun generateInitSQLFile(): File {
-        return copyFileToTempFolder("social/friendship/infrastructure/persistence/sql/init.sql")
+    fun generateInitSQLFile(parentPathFromSourceRoot: String): File {
+        return copyFileToTempFolder(parentPathFromSourceRoot + "init.sql")
     }
 
     /**
@@ -25,17 +25,17 @@ abstract class DockerSQLTest : DockerTest() {
      *
      * @return the generated docker-compose file
      */
-    fun generateDockerComposeFile(): File {
+    fun generateDockerComposeFile(parentPathFromSourceRoot: String): File {
         return createDockerComposeFile(
             this::class.java,
-            "social/friendship/infrastructure/persistence/sql/docker-compose.yml",
+            parentPathFromSourceRoot + "docker-compose.yml",
             path = File.createTempFile("docker-compose", ".yml"),
             "ROOT_PASSWORD" to UUID.randomUUID().toString(),
             "DB_NAME" to database,
             "USER" to user,
             "PASSWORD" to password,
             "PORT" to port,
-            "INIT_SQL_FILE" to generateInitSQLFile().name
+            "INIT_SQL_FILE" to generateInitSQLFile(parentPathFromSourceRoot).name
         )
     }
 }

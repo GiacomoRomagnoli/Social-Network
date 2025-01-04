@@ -31,7 +31,7 @@ object FriendshipRequestSQLRepositoryTest : DockerSQLTest() {
     @JvmStatic
     @BeforeAll
     fun setUpAll() {
-        dockerComposeFile = generateDockerComposeFile()
+        dockerComposeFile = generateDockerComposeFile("social/friendship/infrastructure/persistence/sql/")
     }
 
     @BeforeEach
