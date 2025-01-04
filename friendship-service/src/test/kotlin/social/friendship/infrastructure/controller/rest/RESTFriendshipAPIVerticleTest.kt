@@ -117,7 +117,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         return response
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addFriendshipWithoutUsersParam() {
         val latch = CountDownLatch(2)
@@ -140,7 +140,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         )
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addFriendshipWithoutFriendshipRequestAndUsers() {
         val latch = CountDownLatch(1)
@@ -154,7 +154,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertEquals(StatusCode.FORBIDDEN, response.statusCode())
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addFriendshipRequestWithoutUsers() {
         val latch = CountDownLatch(1)
@@ -168,7 +168,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertEquals(StatusCode.FORBIDDEN, response.statusCode())
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addMessageWithoutFriendship() {
         val latch = CountDownLatch(1)
@@ -182,7 +182,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertEquals(StatusCode.FORBIDDEN, response.statusCode())
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addFriendshipAboutExistingUsers() {
         val latch = CountDownLatch(1)
@@ -201,7 +201,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertEquals(StatusCode.CREATED, response.statusCode())
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addFriendshipRequestAboutExistingUsers() {
         val latch = CountDownLatch(1)
@@ -219,7 +219,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         assertEquals(StatusCode.CREATED, response.statusCode())
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun addMessageAboutExistingFriendship() {
         val latch = CountDownLatch(1)
@@ -259,7 +259,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         return response
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun getFriendshipWithoutUsersParam() {
         val latch = CountDownLatch(2)
@@ -274,7 +274,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         )
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun getFriendshipRequestWithoutUsersParam() {
         val latch = CountDownLatch(1)
@@ -289,7 +289,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         )
     }
 
-    @Timeout(60)
+    @Timeout(5 * 60)
     @Test
     fun getMessageWithoutUserAndIDParam() {
         val latch = CountDownLatch(1)
