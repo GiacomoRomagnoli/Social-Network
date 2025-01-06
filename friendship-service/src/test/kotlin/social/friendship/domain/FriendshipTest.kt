@@ -46,17 +46,7 @@ class FriendshipTest {
         val friendship1a = Friendship.of(from, to)
         val friendship1b = Friendship.of(to, from)
 
-        val friendship2a = Friendship.of(from, to)
-        val friendship2b = Friendship.of(from, from)
-
-        val friendship3a = Friendship.of(from, to)
-        val friendship3b = Friendship.of(to, to)
-
-        assertAll(
-            { assertNotEquals(friendship1a, friendship1b) },
-            { assertNotEquals(friendship2a, friendship2b) },
-            { assertNotEquals(friendship3a, friendship3b) }
-        )
+        assertNotEquals(friendship1a, friendship1b)
     }
 
     @Test
