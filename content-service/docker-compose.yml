@@ -1,0 +1,32 @@
+services:
+  content-sql-repository:
+    image: mysql:latest
+    container_name: content-sql-repository
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: content
+      MYSQL_USER: user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      DB_HOST: content-sql-repository
+      DB_PORT: 3306
+    ports:
+      - "3306:3306"
+    volumes:
+      - content-sql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - db_root_password
+      - db_password
+secrets:
+  db_root_password:
+    file: ./db-root-password.txt
+  db_password:
+    file: ./db-password.txt
+
+volumes:
+  content-sql-data: {}

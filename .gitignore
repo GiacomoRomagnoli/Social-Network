@@ -5,3 +5,4 @@ build/
 bin
 node_modules/
 commons-lib/
+*.txt
