@@ -7,7 +7,8 @@ plugins {
 }
 
 typescript {
-    entrypoint = "src/main/typescript/main.js"
+    outputDir = "build/dist/main/typescript"
+    entrypoint = "main.js"
     tsConfig = "tsconfig.json"
     buildCommandExecutable = BuildCommandExecutable.NODE
     buildCommand = "node_modules/typescript/bin/tsc --build"
@@ -46,7 +47,7 @@ tasks.named("compileTypescript") {
     doLast {
         copy {
             from(piperKtCommonsCompiledPath)
-            into("build/dist/$commonsLibDirName")
+            into("build/dist/main/typescript/$commonsLibDirName")
         }
     }
 }
