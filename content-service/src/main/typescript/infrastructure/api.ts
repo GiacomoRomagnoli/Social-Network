@@ -1,7 +1,7 @@
 import express from "express";
 import http from "http";
 
-class Server {
+export class Server {
     private readonly port: number;
     private readonly middlewares: express.RequestHandler[];
     private readonly router: express.Router;
@@ -38,3 +38,8 @@ class Server {
         });
     }
 }
+
+export const EmptyRouter = express.Router();
+export const DefaultMiddlewares: express.RequestHandler[] = [
+    express.json(),
+];
