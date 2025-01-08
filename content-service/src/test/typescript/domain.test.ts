@@ -1,35 +1,47 @@
 import {describe, expect, test} from '@jest/globals';
-import {feedOf, postOf, feedFrom} from "../../main/typescript/domain/domain";
-import {social} from "../../main/typescript/commons-lib";
-import ID = social.common.ddd.ID;
+import {feedOf, postOf, userOf} from "../../main/typescript/domain/domain";
 
 describe("domain module", () => {
-    let post = postOf("example", "example@mail.com", "my first post!", 0);
-    let feed = feedOf("example@mail.com", [post, postOf("friend", "friend@mail.com", "another post", 1)])
 
-    test("postOf creates a Post", () => {
-        expect(post.author.userName).toBe("example")
-        expect(post.author.email).toBe("example@mail.com")
-        expect(post.content).toBe("my first post!")
-        expect(post.id).toStrictEqual(new ID(0))
+    const username = "username";
+    const email = "email@your.domain"
+    const content = "This is a test"
+
+    test("userOf creates a User", () => {
+        const user = userOf(username, email) ;
+        expect(user.userName).toBe(username);
+        expect(user.email).toBe(email)
     });
 
-    test("post contains keywords", () => {
-        expect(post.contains("first")).toBe(true)
+    test("postOf creates a Post", () => {
+        const user = userOf(username, email)
+        const post = postOf(user, content)
+        expect(post.author).toStrictEqual(user)
+        expect(post.content).toBe(content)
     });
 
     test("feedOf creates a Feed", () => {
-        expect(feed.id).toStrictEqual(new ID("example@mail.com"))
-        expect(feed.posts.length).toBe(2)
+        const user = userOf(username, email);
+        const post1 = postOf(user, content);
+        const post2 = postOf(user, content);
+        const posts = [post1, post2];
+        const feed = feedOf(user, posts);
+        expect(feed.posts).toStrictEqual(posts);
+        expect(feed.owner).toStrictEqual(user);
     });
 
-    test("feedFrom creates a Feed", () => {
-        let feed2 = feedFrom("friend@mail.com", post, postOf("example", "example@mail.com", "another one", 2))
-        expect(feed2.id).toStrictEqual(new ID("friend@mail.com"))
-        expect(feed2.posts.length).toBe(2)
+    test("post contains keywords", () => {
+        const user = userOf(username, email);
+        const post = postOf(user, content);
+        expect(post.contains("test")).toBe(true);
     });
 
-    test("Feed can be filter by keyword", () => {
-       expect(feed.filterBy("first").posts.length).toBe(1)
+    test("feed can be filtered by keywords", () => {
+        const user = userOf(username, email);
+        const post1 = postOf(user, content);
+        const post2 = postOf(user, "without keyword");
+        const feed = feedOf(user, [post1, post2]);
+        const filtered = feedOf(user, [post1]);
+        expect(feed.filterBy("test")).toStrictEqual(filtered);
     });
 });
