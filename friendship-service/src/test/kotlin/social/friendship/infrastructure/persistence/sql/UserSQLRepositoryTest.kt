@@ -42,9 +42,8 @@ object UserSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun save() {
         repository.save(userTo)
-        repository.findById(userTo.id)?.let {
-            assertEquals(userTo, it)
-        }
+        val actual = repository.findById(userTo.id)
+        assertEquals(userTo, actual)
     }
 
     @Timeout(5 * 60)
