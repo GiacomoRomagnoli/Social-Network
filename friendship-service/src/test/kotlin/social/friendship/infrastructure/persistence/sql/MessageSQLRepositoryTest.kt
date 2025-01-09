@@ -1,7 +1,7 @@
 package social.friendship.infrastructure.persistence.sql
 
-import org.apache.logging.log4j.LogManager
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -23,7 +23,6 @@ import java.sql.SQLIntegrityConstraintViolationException
 import java.util.UUID
 
 object MessageSQLRepositoryTest : DockerSQLTest() {
-    private val logger = LogManager.getLogger(this::class)
     private val userTo = User.of("userToID")
     private val userFrom = User.of("userFromID")
     private val userRepository = UserSQLRepository()
@@ -132,7 +131,6 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
         messageRepository.save(original)
         val updated = Message.of(id, friendship, "new content")
         messageRepository.update(updated)
-        logger.trace("original: {}, updated: {}", original.messageId, updated.messageId)
         val actual = messageRepository.findById(original.id)
         assertAll(
             { assertTrue(actual != null) },
@@ -149,5 +147,44 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
         assertThrows<SQLIntegrityConstraintViolationException> {
             messageRepository.update(updated)
         }
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteMessageIfUserToIsDeleted() {
+        messageRepository.save(message)
+        val before = messageRepository.findById(message.id)
+        userRepository.deleteById(userTo.id)
+        val after = messageRepository.findById(message.id)
+        assertAll(
+            { assertEquals(message, before) },
+            { assertEquals(null, after) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteMessageIfUserFromIsDeleted() {
+        messageRepository.save(message)
+        val before = messageRepository.findById(message.id)
+        userRepository.deleteById(userFrom.id)
+        val after = messageRepository.findById(message.id)
+        assertAll(
+            { assertEquals(message, before) },
+            { assertEquals(null, after) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteMessageIfFriendshipIsDeleted() {
+        messageRepository.save(message)
+        val before = messageRepository.findById(message.id)
+        friendshipRepository.deleteById(friendship.id)
+        val after = messageRepository.findById(message.id)
+        assertAll(
+            { assertEquals(message, before) },
+            { assertEquals(null, after) }
+        )
     }
 }
