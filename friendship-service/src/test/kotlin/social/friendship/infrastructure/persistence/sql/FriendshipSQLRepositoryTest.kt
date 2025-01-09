@@ -115,4 +115,44 @@ object FriendshipSQLRepositoryTest : DockerSQLTest() {
             { assertTrue(users.contains(friendship2)) },
         )
     }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteFriendshipIfUserToIsDeleted() {
+        friendshipRepository.save(friendship)
+        val before = friendshipRepository.findById(friendship.id)
+        userRepository.deleteById(userTo.id)
+        val after = friendshipRepository.findById(friendship.id)
+        assertAll(
+            { assertEquals(friendship, before) },
+            { assertEquals(null, after) },
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteFriendshipIfUserFromIsDeleted() {
+        friendshipRepository.save(friendship)
+        val before = friendshipRepository.findById(friendship.id)
+        userRepository.deleteById(userFrom.id)
+        val after = friendshipRepository.findById(friendship.id)
+        assertAll(
+            { assertEquals(friendship, before) },
+            { assertEquals(null, after) },
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteFriendshipIfUserToAndUserFromAreDeleted() {
+        friendshipRepository.save(friendship)
+        val before = friendshipRepository.findById(friendship.id)
+        userRepository.deleteById(userTo.id)
+        userRepository.deleteById(userFrom.id)
+        val after = friendshipRepository.findById(friendship.id)
+        assertAll(
+            { assertEquals(friendship, before) },
+            { assertEquals(null, after) },
+        )
+    }
 }
