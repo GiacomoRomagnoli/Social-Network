@@ -66,9 +66,8 @@ object FriendshipSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun save() {
         friendshipRepository.save(friendship)
-        friendshipRepository.findById(friendship.id)?.let {
-            assertEquals(friendship, it)
-        }
+        val actual = friendshipRepository.findById(friendship.id)
+        assertEquals(friendship, actual)
     }
 
     @Timeout(5 * 60)
@@ -93,17 +92,15 @@ object FriendshipSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun deleteById() {
         friendshipRepository.save(friendship)
-        friendshipRepository.deleteById(friendship.id)?.let {
-            assertEquals(friendship, it)
-        }
+        val actual = friendshipRepository.deleteById(friendship.id)
+        assertEquals(friendship, actual)
     }
 
     @Timeout(5 * 60)
     @Test
     fun deleteByIdReturnsNullIfNotFound() {
-        friendshipRepository.deleteById(friendship.id)?.let {
-            assertEquals(null, it)
-        }
+        val actual = friendshipRepository.deleteById(friendship.id)
+        assertEquals(null, actual)
     }
 
     @Timeout(5 * 60)
