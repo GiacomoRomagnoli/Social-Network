@@ -60,17 +60,15 @@ object UserSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun deleteById() {
         repository.save(userTo)
-        repository.deleteById(userTo.id)?.let {
-            assertEquals(userTo, it)
-        }
+        val actual = repository.deleteById(userTo.id)
+        assertEquals(userTo, actual)
     }
 
     @Timeout(5 * 60)
     @Test
     fun deleteByIdReturnsNullIfNotFound() {
-        repository.deleteById(userTo.id)?.let {
-            assertEquals(null, it)
-        }
+        val actual = repository.deleteById(userTo.id)
+        assertEquals(null, actual)
     }
 
     @Timeout(5 * 60)

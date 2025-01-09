@@ -57,6 +57,12 @@ class UserSQLRepository : Repository<UserID, User>, AbstractSQLRepository() {
     }
 
     override fun update(entity: User) {
-        throw UnsupportedOperationException("Updates on users are not supported")
+        val ps: PreparedStatement = SQLUtils.prepareStatement(
+            connection,
+            SQLOperation.Update.UPDATE_USER,
+            entity.id.value,
+            entity.id.value
+        )
+        ps.executeUpdate()
     }
 }
