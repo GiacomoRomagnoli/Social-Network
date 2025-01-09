@@ -61,6 +61,14 @@ class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQ
     }
 
     override fun update(entity: Friendship) {
-        throw UnsupportedOperationException("Updates on friendships are not supported")
+        val ps: PreparedStatement = SQLUtils.prepareStatement(
+            connection,
+            SQLOperation.Update.UPDATE_FRIENDSHIP,
+            entity.to.id.value,
+            entity.from.id.value,
+            entity.to.id.value,
+            entity.from.id.value
+        )
+        ps.executeUpdate()
     }
 }
