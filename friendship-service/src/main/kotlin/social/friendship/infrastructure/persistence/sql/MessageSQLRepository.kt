@@ -1,22 +1,22 @@
 package social.friendship.social.friendship.infrastructure.persistence.sql
 
-import org.apache.logging.log4j.LogManager
 import social.common.ddd.Repository
 import social.friendship.domain.Friendship
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
 import social.friendship.social.friendship.domain.User
 import java.sql.PreparedStatement
+import java.sql.SQLException
+import java.sql.SQLIntegrityConstraintViolationException
 import java.util.UUID
 
 class MessageSQLRepository : Repository<MessageID, Message>, AbstractSQLRepository() {
-    private val logger = LogManager.getLogger(this::class)
 
     override fun findById(id: MessageID): Message? {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
             SQLOperation.Query.SELECT_MESSAGE_BY_ID,
-            id.value
+            id.value.toString()
         )
         val result = ps.executeQuery()
         return if (result.next()) {
@@ -34,7 +34,6 @@ class MessageSQLRepository : Repository<MessageID, Message>, AbstractSQLReposito
     }
 
     override fun save(entity: Message) {
-        logger.trace("Saving message '{}','{}','{}','{}'", entity.id.value.toString(), entity.friendship.to.id.value, entity.friendship.from.id.value, entity.content)
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
             SQLOperation.Update.INSERT_MESSAGE,
@@ -47,17 +46,33 @@ class MessageSQLRepository : Repository<MessageID, Message>, AbstractSQLReposito
     }
 
     override fun deleteById(id: MessageID): Message? {
-        val messageToDelete = findById(id) ?: return null
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
-            connection,
-            SQLOperation.Update.DELETE_MESSAGE_BY_ID,
-            id.value
-        )
-        val result = ps.executeUpdate()
-        return if (result > 0) {
-            messageToDelete
-        } else {
-            null
+        connection.autoCommit = false
+        try {
+            val messageToDelete = findById(id)
+            if (messageToDelete == null) {
+                return null
+            }
+
+            val ps: PreparedStatement = SQLUtils.prepareStatement(
+                connection,
+                SQLOperation.Update.DELETE_MESSAGE_BY_ID,
+                id.value.toString()
+            )
+
+            val result = ps.executeUpdate()
+
+            return if (result > 0) {
+                connection.commit()
+                messageToDelete
+            } else {
+                connection.rollback()
+                null
+            }
+        } catch (e: SQLException) {
+            connection.rollback()
+            throw e
+        } finally {
+            connection.autoCommit = true
         }
     }
 
@@ -84,6 +99,16 @@ class MessageSQLRepository : Repository<MessageID, Message>, AbstractSQLReposito
     }
 
     override fun update(entity: Message) {
-        throw UnsupportedOperationException("Updates on messages are not supported")
+        val ps: PreparedStatement = SQLUtils.prepareStatement(
+            connection,
+            SQLOperation.Update.UPDATE_MESSAGE,
+            entity.content,
+            entity.id.value.toString(),
+            entity.friendship.to.id.value,
+            entity.friendship.from.id.value
+        )
+        if (ps.executeUpdate() == 0) {
+            throw SQLIntegrityConstraintViolationException("no rows affected")
+        }
     }
 }

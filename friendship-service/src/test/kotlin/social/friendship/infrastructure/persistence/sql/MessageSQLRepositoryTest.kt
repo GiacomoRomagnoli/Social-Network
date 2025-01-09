@@ -1,7 +1,7 @@
 package social.friendship.infrastructure.persistence.sql
 
+import org.apache.logging.log4j.LogManager
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -20,8 +20,10 @@ import social.friendship.social.friendship.infrastructure.persistence.sql.Messag
 import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
 import java.io.File
 import java.sql.SQLIntegrityConstraintViolationException
+import java.util.UUID
 
 object MessageSQLRepositoryTest : DockerSQLTest() {
+    private val logger = LogManager.getLogger(this::class)
     private val userTo = User.of("userToID")
     private val userFrom = User.of("userFromID")
     private val userRepository = UserSQLRepository()
@@ -66,9 +68,11 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun save() {
         messageRepository.save(message)
-        messageRepository.findById(message.id)?.let {
-            assertEquals(message, it)
-        }
+        val actual = messageRepository.findById(message.id)
+        assertAll(
+            { assertTrue(actual != null) },
+            { assertTrue(actual == message) }
+        )
     }
 
     @Timeout(5 * 60)
@@ -93,17 +97,18 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun deleteById() {
         messageRepository.save(message)
-        messageRepository.deleteById(message.id)?.let {
-            assertEquals(message, it)
-        }
+        val actual = messageRepository.deleteById(message.id)
+        assertAll(
+            { assertTrue(actual != null) },
+            { assertTrue(actual == message) }
+        )
     }
 
     @Timeout(5 * 60)
     @Test
     fun deleteByIdReturnsNullIfNotFound() {
-        messageRepository.deleteById(message.id)?.let {
-            assertEquals(null, it)
-        }
+        val actual = messageRepository.deleteById(message.id)
+        assertTrue(actual == null)
     }
 
     @Timeout(5 * 60)
@@ -117,5 +122,32 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
             { assertTrue(users.contains(message)) },
             { assertTrue(users.contains(message2)) },
         )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun updateMessageContent() {
+        val id = UUID.randomUUID()
+        val original = Message.of(id, friendship, "content")
+        messageRepository.save(original)
+        val updated = Message.of(id, friendship, "new content")
+        messageRepository.update(updated)
+        logger.trace("original: {}, updated: {}", original.messageId, updated.messageId)
+        val actual = messageRepository.findById(original.id)
+        assertAll(
+            { assertTrue(actual != null) },
+            { assertTrue(actual?.messageId == updated.messageId) },
+            { assertTrue(actual?.friendship == updated.friendship) },
+            { assertTrue(actual?.content == updated.content) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun updateNonExistingMessage() {
+        val updated = Message.of(friendship, "new content")
+        assertThrows<SQLIntegrityConstraintViolationException> {
+            messageRepository.update(updated)
+        }
     }
 }
