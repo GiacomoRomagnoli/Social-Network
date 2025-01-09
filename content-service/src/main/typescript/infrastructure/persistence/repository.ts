@@ -1,4 +1,4 @@
-import {Feed, Friendship, FriendshipID, Pair, Post, User} from "../../domain/domain";
+import {Feed, Post, User} from "../../domain/domain";
 import {social} from "../../commons-lib";
 import Entity = social.common.ddd.Entity;
 import ID = social.common.ddd.ID;
