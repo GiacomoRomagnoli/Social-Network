@@ -1,6 +1,6 @@
 import {Connection, createConnection, ResultSetHeader, RowDataPacket} from 'mysql2/promise';
 import {Feed, feedOf, Friendship, FriendshipID, Post, postFrom, User} from "../../../domain/domain";
-import {INSERT_POST, INSERT_USER, FIND_POST_BY_ID, FIND_ALL_POST} from "./sql-operations";
+import {INSERT_POST, INSERT_USER, FIND_POST_BY_ID, FIND_ALL_POST, GET_FEED, INSERT_FRIENDSHIP} from "./sql-operations";
 import {Connectable, FriendshipRepository, PostRepository, UserRepository} from "../repository";
 import {social} from "../../../commons-lib";
 import ID = social.common.ddd.ID;
@@ -54,8 +54,12 @@ export class SqlPostRepository extends SqlConnection implements PostRepository {
         return undefined;
     }
 
-    getFeed(user: User): Promise<Feed> {
-        return Promise.resolve(feedOf(user, []));
+    async getFeed(user: User): Promise<Feed> {
+        if(this.connection) {
+            const result = await this.connection?.execute<PostDTO[]>(GET_FEED, [user.email, user.email]);
+            return feedOf(user, this.mapToPost(result[0]));
+        }
+        return feedOf(user, []);
     }
 }
 
@@ -95,19 +99,14 @@ export class SqlFriendshipRepository extends SqlConnection implements Friendship
         return Promise.resolve(undefined);
     }
 
-    save(entity: Friendship): Promise<void> {
+    async save(friendship: Friendship): Promise<void> {
+        await this.connection?.execute<ResultSetHeader>(INSERT_FRIENDSHIP, [friendship.user1.email, friendship.user2.email]);
+    }
+
+    update(friendship: Friendship): Promise<void> {
         return Promise.resolve(undefined);
     }
 
-    update(entity: Friendship): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-}
-
-interface UserDTO extends RowDataPacket {
-    readonly userName: string,
-    readonly email: string,
 }
 
 interface PostDTO extends RowDataPacket {
