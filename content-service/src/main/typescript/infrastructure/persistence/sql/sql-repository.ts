@@ -1,5 +1,5 @@
 import {Connection, createConnection, ResultSetHeader, RowDataPacket} from 'mysql2/promise';
-import {Post, postFrom, User} from "../../../domain/domain";
+import {Feed, feedOf, Post, postFrom, User} from "../../../domain/domain";
 import {INSERT_POST, INSERT_USER, FIND_POST_BY_ID, FIND_ALL_POST} from "./sql-operations";
 import {Connectable, PostRepository, UserRepository} from "../repository";
 import {social} from "../../../commons-lib";
@@ -38,7 +38,7 @@ export class SqlPostRepository extends SqlConnection implements PostRepository {
         return undefined;
     }
 
-    async deleteById(id: string): Promise<Post | undefined> {
+    async deleteById(id: ID<string>): Promise<Post | undefined> {
         return undefined;
     }
 
@@ -53,6 +53,10 @@ export class SqlPostRepository extends SqlConnection implements PostRepository {
     async update(entity: Post): Promise<void> {
         return undefined;
     }
+
+    getFeed(user: User): Promise<Feed> {
+        return Promise.resolve(feedOf(user, []));
+    }
 }
 
 export class SqlUserRepository extends SqlConnection implements UserRepository {
@@ -64,7 +68,7 @@ export class SqlUserRepository extends SqlConnection implements UserRepository {
         return undefined;
     }
 
-    async deleteById(id: string): Promise<User | undefined> {
+    async deleteById(id: ID<string>): Promise<User | undefined> {
         return undefined;
     }
 
