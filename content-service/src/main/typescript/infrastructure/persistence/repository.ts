@@ -1,4 +1,4 @@
-import {Feed, Post, User} from "../../domain/domain";
+import {Feed, Friendship, FriendshipID, Pair, Post, User} from "../../domain/domain";
 import {social} from "../../commons-lib";
 import Entity = social.common.ddd.Entity;
 import ID = social.common.ddd.ID;
@@ -20,3 +20,5 @@ export interface PostRepository extends Repository<string, ID<string>, Post>, Co
 }
 
 export interface UserRepository extends Repository<string, ID<string>, User>, Connectable {}
+
+export interface FriendshipRepository extends Repository<Pair<string, string>, FriendshipID, Friendship>, Connectable {}

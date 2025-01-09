@@ -1,7 +1,7 @@
 import {Connection, createConnection, ResultSetHeader, RowDataPacket} from 'mysql2/promise';
-import {Feed, feedOf, Post, postFrom, User} from "../../../domain/domain";
+import {Feed, feedOf, Friendship, FriendshipID, Post, postFrom, User} from "../../../domain/domain";
 import {INSERT_POST, INSERT_USER, FIND_POST_BY_ID, FIND_ALL_POST} from "./sql-operations";
-import {Connectable, PostRepository, UserRepository} from "../repository";
+import {Connectable, FriendshipRepository, PostRepository, UserRepository} from "../repository";
 import {social} from "../../../commons-lib";
 import ID = social.common.ddd.ID;
 
@@ -79,6 +79,30 @@ export class SqlUserRepository extends SqlConnection implements UserRepository {
     async update(entity: User): Promise<void> {
         return undefined;
     }
+}
+
+export class SqlFriendshipRepository extends SqlConnection implements FriendshipRepository {
+
+    deleteById(id: FriendshipID): Promise<Friendship | undefined> {
+        return Promise.resolve(undefined);
+    }
+
+    findAll(): Promise<Friendship[]> {
+        return Promise.resolve([]);
+    }
+
+    findByID(id: FriendshipID): Promise<Friendship | undefined> {
+        return Promise.resolve(undefined);
+    }
+
+    save(entity: Friendship): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    update(entity: Friendship): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
 }
 
 interface UserDTO extends RowDataPacket {
