@@ -89,7 +89,7 @@ export class FriendshipID extends ID<Pair<string, string>> {
 export interface Friendship extends Entity<FriendshipID> {
     readonly user1: User;
     readonly user2: User;
-    readonly id: FriendshipID
+    readonly id: FriendshipID;
 }
 
 class FriendshipImpl extends Entity<FriendshipID> implements Friendship {
