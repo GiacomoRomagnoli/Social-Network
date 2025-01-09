@@ -51,6 +51,12 @@ object SQLOperation {
             DELETE FROM friendship
             WHERE user_to = ? AND user_from = ?
             """
+        const val UPDATE_FRIENDSHIP =
+            """
+            UPDATE friendship
+            SET user_to = ?, user_from = ?
+            WHERE user_to = ? AND user_from = ?
+            """
         const val INSERT_FRIENDSHIP_REQUEST =
             """
             INSERT INTO friendship_request (user_to, user_from)
@@ -59,6 +65,12 @@ object SQLOperation {
         const val DELETE_FRIENDSHIP_REQUEST_BY_ID =
             """
             DELETE FROM friendship_request
+            WHERE user_to = ? AND user_from = ?
+            """
+        const val UPDATE_FRIENDSHIP_REQUEST =
+            """
+            UPDATE friendship_request
+            SET user_to = ?, user_from = ?
             WHERE user_to = ? AND user_from = ?
             """
         const val INSERT_MESSAGE =
@@ -71,6 +83,12 @@ object SQLOperation {
             DELETE FROM message
             WHERE id = ?
             """
+        const val UPDATE_MESSAGE =
+            """
+            UPDATE message
+            SET content = ?
+            WHERE id = ? AND user_to = ? AND user_from = ?
+            """
         const val INSERT_USER =
             """
             INSERT INTO user (id)
@@ -79,6 +97,12 @@ object SQLOperation {
         const val DELETE_USER_BY_ID =
             """
             DELETE FROM user
+            WHERE id = ?
+            """
+        const val UPDATE_USER =
+            """
+            UPDATE user
+            SET id = ?
             WHERE id = ?
             """
     }
