@@ -109,6 +109,66 @@ object KafkaFriendshipEventManagerVerticleTest : DockerSQLTest() {
     }
 
     @Test
+    fun updatesDatabaseUponReceivingUserCreatedEventUsingKeyId() {
+        val before = userRepository.findById(user1.id)
+        val producer = KafkaFriendshipProducer.createProducer(vertx)
+        val record = KafkaProducerRecord.create<String, String>(
+            UserCreated.TOPIC,
+            "id",
+            user1.id.value
+        )
+        producer.write(record)
+        logger.trace("Sent event: {}", record.value())
+
+        // waits for the event to be processed
+        val latch = CountDownLatch(1)
+        lateinit var after: User
+        vertx.eventBus().consumer<String>(UserCreated.TOPIC) {
+            userRepository.findById(user1.id)?.let {
+                after = it
+                latch.countDown()
+            }
+        }
+        logger.trace("Waiting for event to be processed")
+        latch.await()
+
+        assertAll(
+            { assertEquals(null, before) },
+            { assertEquals(user1, after) }
+        )
+    }
+
+    @Test
+    fun doesNotUpdateDatabaseUponReceivingNullEventValue() {
+        val before = userRepository.findById(user1.id)
+        val producer = KafkaFriendshipProducer.createProducer(vertx)
+        val record = KafkaProducerRecord.create<String, String>(
+            UserCreated.TOPIC,
+            // NOTE: if no key is provided, it will be assigned to 'null' (it's this case)
+            null
+        )
+        producer.write(record)
+        logger.trace("Sent event: {}", record.value())
+
+        // waits for the event to be processed
+        val latch = CountDownLatch(1)
+        vertx.eventBus().consumer<String>(UserCreated.TOPIC) {
+            userRepository.findById(user1.id).let {
+                latch.countDown()
+            }
+        }
+
+        // waits for the event to be processed
+        latch.await()
+
+        val after = userRepository.findById(user1.id)
+        assertAll(
+            { assertEquals(null, before) },
+            { assertEquals(null, after) }
+        )
+    }
+
+    @Test
     fun updatesDatabaseUponReceivingUserBlockedEvent() {
         userRepository.save(user1)
         userRepository.save(user2)

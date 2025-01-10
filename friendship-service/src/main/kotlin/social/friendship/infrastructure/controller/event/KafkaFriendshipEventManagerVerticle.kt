@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.vertx.core.AbstractVerticle
 import io.vertx.kafka.client.consumer.KafkaConsumer
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord
 import io.vertx.kafka.client.producer.KafkaProducer
 import io.vertx.kafka.client.producer.KafkaProducerRecord
 import org.apache.logging.log4j.LogManager
@@ -80,14 +81,9 @@ class KafkaFriendshipEventManagerVerticle(val credentials: DatabaseCredentials? 
 
     private fun handleEvents(consumer: KafkaConsumer<String, String>, producer: KafkaProducer<String, String>) {
         consumer.handler { record ->
-            logger.debug("Received event: {}", record.value())
+            logger.debug("Received event: TOPIC:{}, KEY:{}, VALUE:{}", record.topic(), record.key(), record.value())
             when (record.topic()) {
-                UserCreated.TOPIC -> {
-                    mapper.readValue(record.value(), User::class.java).let {
-                        userService.add(it)
-                        vertx.eventBus().publish(UserCreated.TOPIC, record.value())
-                    }
-                }
+                UserCreated.TOPIC -> addUser(record)
 
                 UserBlocked.TOPIC -> {
                     val usersPairTypeRef = object : TypeReference<Pair<User, User>>() {}
@@ -103,7 +99,45 @@ class KafkaFriendshipEventManagerVerticle(val credentials: DatabaseCredentials? 
                         logger.trace("Removed friendship request between {} and {}", userBlocking, userToBlock)
                     }
                 }
+
+                else -> {
+                    logger.warn("Received event from unknown topic: {}", record.topic())
+                }
             }
+        }
+    }
+
+    private fun addUser(record: KafkaConsumerRecord<String, String>) {
+        fun addUserFromId() {
+            val inferredUser = User.of(record.value())
+            userService.add(inferredUser)
+            vertx.eventBus().publish(UserCreated.TOPIC, mapper.writeValueAsString(inferredUser))
+        }
+
+        fun addUserFromJson() {
+            mapper.readValue(record.value(), User::class.java).let {
+                userService.add(it)
+                vertx.eventBus().publish(UserCreated.TOPIC, record.value())
+            }
+        }
+
+        logger.trace("Received UserCreated event: {}", record.value())
+        try {
+            if (record.value() != null) {
+                logger.trace("Received UserCreated event with value: {}", record.value().toString())
+                if (record.key() == "id") {
+                    logger.trace("Received UserCreated event with ID: {}", record.key())
+                    addUserFromId()
+                } else {
+                    logger.trace("Received UserCreated event with JSON: {}", record.value())
+                    addUserFromJson()
+                }
+            } else {
+                logger.warn("Received UserCreated event with null value, skipping event processing operation..")
+                vertx.eventBus().publish(UserCreated.TOPIC, null)
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to process event: key:{}, value:{}", record.key(), record.value(), e)
         }
     }
 
