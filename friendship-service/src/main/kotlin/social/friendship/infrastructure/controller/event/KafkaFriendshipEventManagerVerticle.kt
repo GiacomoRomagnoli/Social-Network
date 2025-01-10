@@ -121,18 +121,14 @@ class KafkaFriendshipEventManagerVerticle(val credentials: DatabaseCredentials? 
             }
         }
 
-        logger.trace("Received UserCreated event: {}", record.value())
         try {
-            if (record.value() != null) {
-                logger.trace("Received UserCreated event with value: {}", record.value().toString())
+            record.value()?.let { value ->
                 if (record.key() == "id") {
-                    logger.trace("Received UserCreated event with ID: {}", record.key())
                     addUserFromId()
                 } else {
-                    logger.trace("Received UserCreated event with JSON: {}", record.value())
                     addUserFromJson()
                 }
-            } else {
+            } ?: run {
                 logger.warn("Received UserCreated event with null value, skipping event processing operation..")
                 vertx.eventBus().publish(UserCreated.TOPIC, null)
             }
