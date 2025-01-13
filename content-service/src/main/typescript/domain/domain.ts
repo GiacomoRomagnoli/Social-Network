@@ -4,7 +4,7 @@ import AggregateRoot = social.common.ddd.AggregateRoot;
 import ID = social.common.ddd.ID;
 import Entity = social.common.ddd.Entity;
 
-class UserID extends ID<string> {}
+export class UserID extends ID<string> {}
 
 export interface User extends Entity<UserID> {
     readonly userName: string;
@@ -22,7 +22,7 @@ class UserImpl extends Entity<UserID> implements User {
     }
 }
 
-class PostID extends ID<string> {}
+export class PostID extends ID<string> {}
 
 export interface Post extends AggregateRoot<PostID> {
     readonly author: User;
@@ -45,7 +45,7 @@ class PostImpl extends AggregateRoot<PostID> implements Post {
     }
 }
 
-class FeedID extends ID<string> {}
+export class FeedID extends ID<string> {}
 
 export interface Feed {
     readonly posts: Post[];

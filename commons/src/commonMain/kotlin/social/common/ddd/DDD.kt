@@ -5,8 +5,7 @@ import kotlin.js.JsExport
 /**
  * Marker interface to easily identify a domain object as service.
  */
-@JsExport
-interface Service
+expect interface Service
 
 /**
  * class to identify an object as ID

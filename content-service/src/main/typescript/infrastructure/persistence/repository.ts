@@ -2,6 +2,8 @@ import {Feed, Friendship, FriendshipID, Pair, Post, User} from "../../domain/dom
 import {social} from "../../commons-lib";
 import Entity = social.common.ddd.Entity;
 import ID = social.common.ddd.ID;
+import fs from "node:fs";
+import {ConnectionOptions} from "mysql2/promise";
 
 export interface Repository<T, I extends ID<T>, E extends Entity<I>> {
     save(entity: E): Promise<void>
@@ -12,7 +14,7 @@ export interface Repository<T, I extends ID<T>, E extends Entity<I>> {
 }
 
 export interface Connectable {
-    connect(host: string, service: string, username: string, password: string): Promise<void>;
+    connect(config: ConnectionOptions): Promise<void>;
 }
 
 export interface PostRepository extends Repository<string, ID<string>, Post>, Connectable {
@@ -22,3 +24,12 @@ export interface PostRepository extends Repository<string, ID<string>, Post>, Co
 export interface UserRepository extends Repository<string, ID<string>, User>, Connectable {}
 
 export interface FriendshipRepository extends Repository<Pair<string, string>, FriendshipID, Friendship>, Connectable {}
+
+export function getConfiguration() : ConnectionOptions {
+    return {
+        host: "127.0.0.1",
+        database: "content",
+        user: "user",
+        password: fs.readFileSync("./db-password.txt", 'utf8'),
+    }
+}

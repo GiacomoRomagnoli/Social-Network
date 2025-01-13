@@ -18,7 +18,7 @@ export class Server {
             const app = express();
             app.use(...this.middlewares);
             app.use("/", this.router);
-            this.server = http.createServer(app)
+            this.server = http.createServer(app);
             this.server.listen(this.port, () => {
                onStarted();
                resolve();

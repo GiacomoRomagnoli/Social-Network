@@ -4,23 +4,21 @@ import {
     SqlPostRepository,
     SqlUserRepository
 } from "../../main/typescript/infrastructure/persistence/sql/sql-repository";
-import fs from 'node:fs';
 import {friendshipOf, postFrom, postOf, userOf} from "../../main/typescript/domain/domain";
 import {
     Connectable,
-    FriendshipRepository,
+    FriendshipRepository, getConfiguration,
     PostRepository,
     UserRepository
 } from "../../main/typescript/infrastructure/persistence/repository";
 
 describe("sql-repository module", () => {
     const shell = require("shelljs");
-    const password = fs.readFileSync("./db-password.txt", 'utf8');
     let postRepository: PostRepository;
     let userRepository: UserRepository;
     let friendshipRepository: FriendshipRepository;
     const connect =  async (repository: Connectable) =>
-        await repository.connect("127.0.0.1", "content", "user", password);
+        await repository.connect(getConfiguration());
 
     beforeEach(() => {
         const result = shell.exec("docker compose up --wait");

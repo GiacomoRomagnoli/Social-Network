@@ -1,4 +1,4 @@
-import {Connection, createConnection, ResultSetHeader, RowDataPacket} from 'mysql2/promise';
+import {Connection, ConnectionOptions, createConnection, ResultSetHeader, RowDataPacket} from 'mysql2/promise';
 import {
     Feed,
     feedOf,
@@ -33,13 +33,8 @@ import ID = social.common.ddd.ID;
 abstract class SqlConnection implements Connectable {
     protected connection?: Connection;
 
-    async connect(host: string, database: string, username: string, password: string) {
-        this.connection = await createConnection({
-            host: host,
-            user: username,
-            password: password,
-            database: database
-        });
+    async connect(config: ConnectionOptions) {
+        this.connection = await createConnection(config);
     }
 }
 
