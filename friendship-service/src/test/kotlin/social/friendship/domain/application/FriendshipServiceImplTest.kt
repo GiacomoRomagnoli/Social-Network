@@ -86,6 +86,10 @@ class FriendshipServiceImplTest {
         `when`(friendshipRepository.findAllFriendsOf(user.id)).thenReturn(listOf(user))
 
     init {
+        `when`(friendshipRequestRepository.findById(friendshipRequest.id)).thenReturn(friendshipRequest)
+        `when`(friendshipRequestRepository.deleteById(friendshipRequest.id)).thenReturn(friendshipRequest)
+        `when`(friendshipRequestRepository.getAllFriendshipRequestsOf(user.id)).thenReturn(listOf(friendshipRequest))
+
         `when`(userRepository.findById(user.id)).thenReturn(user)
 
         doNothing().`when`(kafkaProducer).publishEvent(friendshipRemovedEvent)
@@ -159,19 +163,53 @@ class FriendshipServiceImplTest {
 
     @Test
     fun addFriendshipRequest() {
-        assertDoesNotThrow { friendshipRequestService.add(friendshipRequest) }
+        assertDoesNotThrow { friendshipService.addFriendshipRequest(friendshipRequest) }
     }
 
     @Test
     fun getFriendshipRequest() {
-        val actual = friendshipRequestService.getById(friendshipRequest.id)
+        val actual = friendshipService.getFriendshipRequest(friendshipRequest.id)
         assertEquals(friendshipRequest, actual)
     }
 
     @Test
     fun getNonExistentFriendshipRequest() {
-        val actual = friendshipRequestService.getById(nonExistingFriendshipRequest.id)
+        val actual = friendshipService.getFriendshipRequest(nonExistingFriendshipRequest.id)
         assertEquals(null, actual)
+    }
+
+    @Test
+    fun rejectFriendshipRequestOfUser() {
+        val actual = friendshipService.rejectFriendshipRequest(friendshipRequest)
+        assertEquals(friendshipRequest, actual)
+    }
+
+    @Test
+    fun rejectNonExistentFriendshipRequest() {
+        val actual = friendshipService.rejectFriendshipRequest(nonExistingFriendshipRequest)
+        assertEquals(null, actual)
+    }
+
+    @Test
+    fun acceptFriendshipRequest() {
+        assertDoesNotThrow { friendshipService.acceptFriendshipRequest(friendshipRequest) }
+    }
+
+    @Test
+    fun acceptFriendshipRequestOfNonExistingUser() {
+        assertThrows<IllegalArgumentException> { friendshipService.acceptFriendshipRequest(nonExistingFriendshipRequest) }
+    }
+
+    @Test
+    fun getAllFriendshipRequestsByUserId() {
+        val actual = friendshipService.getAllFriendshipRequestsByUserId(user.id)
+        assertEquals(listOf(friendshipRequest), actual)
+    }
+
+    @Test
+    fun getAllFriendshipRequestsByNonExistingUserId() {
+        val actual = friendshipService.getAllFriendshipRequestsByUserId(nonExistingUser.id)
+        assertEquals(emptyList(), actual)
     }
 
     @Test

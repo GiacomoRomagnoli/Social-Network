@@ -29,12 +29,6 @@ import java.nio.file.Paths
 
 interface FriendshipService : FriendshipProcessor, FriendshipRequestProcessor, MessageProcessor, UserProcessor, Service
 
-interface FriendshipService<I : ID<*>, E : Entity<*>> : Service {
-    fun add(entity: E)
-    fun getById(id: I): E?
-    fun deleteById(id: I): E?
-    fun getAll(): Array<E>
-}
 class FriendshipServiceVerticle(val credentials: DatabaseCredentials? = null, shouldConnectToDB: Boolean? = true) : FriendshipService, AbstractVerticle() {
     private val userRepository = UserSQLRepository()
     private val friendshipRepository = FriendshipSQLRepository()
@@ -87,6 +81,30 @@ class FriendshipServiceVerticle(val credentials: DatabaseCredentials? = null, sh
 
     override fun getAllFriendsByUserId(userID: User.UserID): Iterable<User> = friendshipRepository.findAllFriendsOf(userID)
 
+    override fun addFriendshipRequest(friendshipRequest: FriendshipRequest) = friendshipRequestRepository.save(friendshipRequest)
+
+    override fun getFriendshipRequest(friendshipRequestID: FriendshipRequestID): FriendshipRequest? = friendshipRequestRepository.findById(friendshipRequestID)
+
+    override fun rejectFriendshipRequest(friendshipRequest: FriendshipRequest): FriendshipRequest? {
+        return friendshipRequestRepository.deleteById(friendshipRequest.id)?.also {
+            val event = FriendshipRequestRejected(it.to.id.value, it.from.id.value)
+            kafkaProducer.publishEvent(event)
+            vertx.eventBus().publish(FriendshipRequestRejected.TOPIC, mapper.writeValueAsString(it))
+        }
+    }
+
+    override fun getAllFriendshipRequests(): Array<FriendshipRequest> = friendshipRequestRepository.findAll()
+
+    override fun getAllFriendshipRequestsByUserId(userID: User.UserID): Iterable<FriendshipRequest> = friendshipRequestRepository.getAllFriendshipRequestsOf(userID)
+
+    override fun acceptFriendshipRequest(request: FriendshipRequest) {
+        friendshipRequestRepository.deleteById(request.id)?.let {
+            friendshipRepository.save(Friendship.of(request))
+            val event = FriendshipRequestAccepted(request.to.id.value, request.from.id.value)
+            kafkaProducer.publishEvent(event)
+            vertx.eventBus().publish(FriendshipRequestAccepted.TOPIC, mapper.writeValueAsString(it))
+        } ?: throw IllegalArgumentException("Friendship request not found")
+    }
 
 class FriendshipServiceImpl<I : ID<*>, E : Entity<*>>(private val repository: Repository<I, E>) : FriendshipService<I, E> {
     override fun add(entity: E) = repository.save(entity)
