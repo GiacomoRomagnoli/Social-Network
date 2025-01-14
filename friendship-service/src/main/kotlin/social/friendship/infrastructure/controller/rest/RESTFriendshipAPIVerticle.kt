@@ -8,46 +8,24 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
-import io.vertx.kafka.client.producer.KafkaProducer
-import io.vertx.kafka.client.producer.KafkaProducerRecord
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import social.common.endpoint.Endpoint
 import social.common.endpoint.Port
 import social.common.endpoint.StatusCode
-import social.common.events.FriendshipRequestAccepted
+import social.friendship.application.FriendshipService
 import social.friendship.domain.Friendship
-import social.friendship.domain.Friendship.FriendshipID
 import social.friendship.domain.FriendshipRequest
-import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.domain.Message
-import social.friendship.domain.Message.MessageID
-import social.friendship.infrastructure.controller.event.KafkaFriendshipProducer
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.application.FriendshipService
-import social.friendship.social.friendship.domain.application.FriendshipServiceImpl
-import social.friendship.social.friendship.infrastructure.persistence.sql.DatabaseCredentials
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.MessageSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
-import java.nio.file.Files
-import java.nio.file.Paths
+import social.friendship.domain.User
+import social.friendship.infrastructure.persistence.sql.SQLStateError
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.concurrent.Callable
 import kotlin.String
 
-class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : AbstractVerticle() {
+class RESTFriendshipAPIVerticle(private val service: FriendshipService) : AbstractVerticle() {
     private val logger: Logger = LogManager.getLogger(this::class)
-    private val userSQLRepository = UserSQLRepository()
-    private val friendshipRepository = FriendshipSQLRepository()
-    private val friendshipRequestRepository = FriendshipRequestSQLRepository()
-    private val messageRepository = MessageSQLRepository()
-    private val friendshipService: FriendshipService<FriendshipID, Friendship> = FriendshipServiceImpl(friendshipRepository)
-    private val friendshipRequestService: FriendshipService<FriendshipRequestID, FriendshipRequest> = FriendshipServiceImpl(friendshipRequestRepository)
-    private val messageService: FriendshipService<MessageID, Message> = FriendshipServiceImpl(messageRepository)
-    private lateinit var producer: KafkaProducer<String, String>
     private val mapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
     }
@@ -81,33 +59,7 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
     }
 
     override fun start() {
-        if (credentials != null) {
-            connectToDatabase(credentials)
-        } else {
-            connectToDefaultDatabase()
-        }
-        initializeKafkaEventProducer()
         createHttpServer()
-    }
-
-    private fun connectToDatabase(credentials: DatabaseCredentials) {
-        listOf(userSQLRepository, friendshipRepository, friendshipRequestRepository, messageRepository).forEach {
-            it.connect(credentials.host, credentials.port, credentials.dbName, credentials.username, credentials.password)
-        }
-    }
-
-    private fun connectToDefaultDatabase() {
-        val host = System.getenv("DB_HOST")
-        val port = System.getenv("DB_PORT")
-        val dbName = System.getenv("MYSQL_DATABASE")
-        val username = System.getenv("MYSQL_USER")
-        val password = Files.readString(Paths.get("/run/secrets/db_password")).trim()
-
-        connectToDatabase(DatabaseCredentials(host, port, dbName, username, password))
-    }
-
-    private fun initializeKafkaEventProducer() {
-        producer = KafkaFriendshipProducer.createProducer(vertx)
     }
 
     private fun createHttpServer() {
@@ -116,10 +68,15 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
 
         router.post(Endpoint.FRIENDSHIP).handler(::addFriendship)
         router.get(Endpoint.FRIENDSHIP).handler(::getFriendship)
-        router.post(Endpoint.FRIENDSHIP_REQUEST).handler(::addFriendshipRequest)
+
         router.get(Endpoint.FRIENDSHIP_REQUEST).handler(::getFriendshipRequest)
-        router.post(Endpoint.MESSAGE).handler(::addMessage)
-        router.get(Endpoint.MESSAGE).handler(::getMessage)
+        router.post(Endpoint.FRIENDSHIP_REQUEST_SEND).handler(::addFriendshipRequest)
+        router.put(Endpoint.FRIENDSHIP_REQUEST_ACCEPT).handler(::acceptFriendshipRequest)
+        router.put(Endpoint.FRIENDSHIP_REQUEST_DECLINE).handler(::rejectFriendshipRequest)
+
+        router.post(Endpoint.MESSAGE_SEND).handler(::addMessage)
+        router.get(Endpoint.MESSAGE_RECEIVE).handler(::getMessagesReceived)
+        router.get(Endpoint.MESSAGE_CHAT).handler(::getChat)
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -133,10 +90,7 @@ class RESTFriendshipAPIVerticle(val credentials: DatabaseCredentials? = null) : 
                 logger.debug("Received POST request with body: '{}'", requestBody)
 
                 val friendship: Friendship = mapper.readValue(requestBody, Friendship::class.java)
-                friendshipService.add(friendship)
-
-                val friendshipJsonString = mapper.writeValueAsString(friendship)
-                producer.write(KafkaProducerRecord.create(FriendshipRequestAccepted.TOPIC, friendshipJsonString))
+                service.addFriendship(friendship)
             }
         ).onComplete {
             if (it.succeeded()) {
