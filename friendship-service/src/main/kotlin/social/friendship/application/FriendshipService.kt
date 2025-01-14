@@ -89,7 +89,7 @@ class FriendshipServiceVerticle(val credentials: DatabaseCredentials? = null, sh
             val event = FriendshipRequestRejected(it.to.id.value, it.from.id.value)
             kafkaProducer.publishEvent(event)
             vertx.eventBus().publish(FriendshipRequestRejected.TOPIC, mapper.writeValueAsString(it))
-        }
+        } ?: throw IllegalArgumentException("Friendship request not found")
     }
 
     override fun getAllFriendshipRequests(): Array<FriendshipRequest> = friendshipRequestRepository.findAll()

@@ -604,4 +604,49 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
             { assertEquals(expectedGetUserFriendshipAfterUpdate.first(), getUserFriendshipAfterUpdate.first()) },
         )
     }
+
+    @Timeout(5 * 60)
+    @Test
+    fun rejectFriendshipRequest() {
+        val latch = CountDownLatch(3)
+
+        // adds users and friendship request to the database to be able to accept a friendship request
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+
+        val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest1)
+        val friendshipRequestJson = JsonObject(friendshipRequestJsonString)
+
+        val getFriendshipRequestResponseBeforeUpdate = sendGetRequest("id", user1.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
+        val friendshipRequestBeforeUpdate = mapper.readValue(getFriendshipRequestResponseBeforeUpdate.body(), Array<FriendshipRequest>::class.java)
+        val expectedGetFriendshipRequestBeforeUpdate = arrayOf(friendshipRequest1)
+
+        val putFriendshipRequestResponse = sendPutRequest(friendshipRequestJson, latch, Endpoint.FRIENDSHIP_REQUEST_DECLINE)
+        val getFriendshipRequestResponseAfterUpdate = sendGetRequest("id", user1.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.OK, getFriendshipRequestResponseBeforeUpdate.statusCode()) },
+            { assertEquals(friendshipRequestBeforeUpdate.size, 1) },
+            { assertEquals(expectedGetFriendshipRequestBeforeUpdate.first(), friendshipRequestBeforeUpdate.first()) },
+            { assertEquals(StatusCode.OK, putFriendshipRequestResponse.statusCode()) },
+            { assertEquals(StatusCode.OK, getFriendshipRequestResponseAfterUpdate.statusCode()) },
+            { assertEquals(getFriendshipRequestResponseAfterUpdate.body(), "[]") },
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun rejectUnexistingFriendshipRequest() {
+        val latch = CountDownLatch(1)
+
+        val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest1)
+        val friendshipRequestJson = JsonObject(friendshipRequestJsonString)
+
+        val response = sendPutRequest(friendshipRequestJson, latch, Endpoint.FRIENDSHIP_REQUEST_DECLINE)
+
+        latch.await()
+        assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
+    }
 }
