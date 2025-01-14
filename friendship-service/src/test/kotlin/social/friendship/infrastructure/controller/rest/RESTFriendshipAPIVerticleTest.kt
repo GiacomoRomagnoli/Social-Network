@@ -3,6 +3,7 @@ package social.friendship.infrastructure.controller.rest
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.vertx.core.AbstractVerticle
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.client.HttpResponse
@@ -12,25 +13,22 @@ import io.vertx.ext.web.codec.BodyCodec
 import org.apache.logging.log4j.LogManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertAll
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import social.common.endpoint.Endpoint
 import social.common.endpoint.StatusCode
+import social.friendship.application.FriendshipServiceVerticle
 import social.friendship.domain.Friendship
 import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.Message
+import social.friendship.domain.User
 import social.friendship.infrastructure.DockerSQLTest
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.infrastructure.persistence.sql.DatabaseCredentials
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.MessageSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
+import social.friendship.infrastructure.persistence.sql.DatabaseCredentials
 import java.io.File
 import java.util.concurrent.CountDownLatch
-import kotlin.test.assertEquals
 
 object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private val logger = LogManager.getLogger(this::class)
@@ -46,16 +44,13 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private val friendshipRequest1 = FriendshipRequest.of(user1, user2)
     private val friendshipRequest2 = FriendshipRequest.of(user3, user4)
     private val friendshipRequest3 = FriendshipRequest.of(user5, user6)
-    private val message1 = Message.of(friendship1, "message")
-    private val message2 = Message.of(friendship1, "message2")
-    private val message3 = Message.of(friendship1, "message3")
+    private val message1 = Message.of(user1, user2, "message")
+    private val message2 = Message.of(user1, user2, "message2")
+    private val message3 = Message.of(user1, user2, "message3")
     private lateinit var webClient: WebClient
     private lateinit var dockerComposeFile: File
-    private val userRepository = UserSQLRepository()
-    private val friendshipRequestRepository = FriendshipRequestSQLRepository()
-    private val friendshipRepository = FriendshipSQLRepository()
-    private val messageRepository = MessageSQLRepository()
-    private val api = RESTFriendshipAPIVerticle(DatabaseCredentials(host, port, database, user, password))
+    private lateinit var api: RESTFriendshipAPIVerticle
+    private lateinit var service: FriendshipServiceVerticle
     private val mapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
     }
@@ -63,7 +58,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     @JvmStatic
     @BeforeAll
     fun setUpAll() {
-        dockerComposeFile = generateDockerComposeFile("social/friendship/infrastructure/persistence/sql/")
+        dockerComposeFile = generateDockerComposeFile("social/friendship/infrastructure/controller/rest/")
     }
 
     @BeforeEach
@@ -71,19 +66,21 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         executeDockerComposeCmd(dockerComposeFile, "up", "--wait")
 
         val vertx = Vertx.vertx()
-        startRESTFriendshipAPIVerticle(vertx)
+        service = FriendshipServiceVerticle(DatabaseCredentials(host, port, database, user, password))
+        deployVerticle(vertx, service)
+        api = RESTFriendshipAPIVerticle(service)
+        deployVerticle(vertx, api)
         createTestWebClient(vertx)
-        connectToDatabase()
     }
 
-    private fun startRESTFriendshipAPIVerticle(vertx: Vertx) {
+    private fun deployVerticle(vertx: Vertx, verticle: AbstractVerticle) {
         val latch = CountDownLatch(1)
-        vertx.deployVerticle(api).onComplete {
+        vertx.deployVerticle(verticle).onComplete {
             latch.countDown()
             if (it.succeeded()) {
-                logger.info("Friendship REST verticle started")
+                logger.info("Verticle started")
             } else {
-                logger.error("Failed to start friendship API:", it.cause())
+                logger.error("Failed to start verticle:", it.cause())
             }
         }
         latch.await()
