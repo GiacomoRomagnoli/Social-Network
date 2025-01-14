@@ -6,8 +6,7 @@ import social.common.ddd.AggregateRoot
 import social.common.ddd.Factory
 import social.common.ddd.ID
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.User.UserID
+import social.friendship.domain.User.UserID
 
 class FriendshipRequest private constructor(
     @JsonProperty("to") val to: User,

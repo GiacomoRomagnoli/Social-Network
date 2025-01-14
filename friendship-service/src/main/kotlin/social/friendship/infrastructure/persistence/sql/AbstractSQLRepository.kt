@@ -1,4 +1,4 @@
-package social.friendship.social.friendship.infrastructure.persistence.sql
+package social.friendship.infrastructure.persistence.sql
 
 import org.apache.logging.log4j.LogManager
 import java.sql.Connection

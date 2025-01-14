@@ -1,4 +1,4 @@
-package social.friendship.social.friendship.infrastructure.persistence.sql
+package social.friendship.infrastructure.persistence.sql
 
 import com.mysql.cj.jdbc.exceptions.CommunicationsException
 import java.sql.Connection

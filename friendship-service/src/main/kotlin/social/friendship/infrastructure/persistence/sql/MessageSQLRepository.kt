@@ -1,9 +1,9 @@
-package social.friendship.social.friendship.infrastructure.persistence.sql
+package social.friendship.infrastructure.persistence.sql
 
+import social.friendship.application.MessageRepository
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.infrastructure.persistence.MessageRepository
+import social.friendship.domain.User
 import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException

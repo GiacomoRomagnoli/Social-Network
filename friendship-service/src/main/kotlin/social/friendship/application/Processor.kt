@@ -1,4 +1,4 @@
-package social.friendship.social.friendship.domain.application
+package social.friendship.application
 
 import social.friendship.domain.Friendship
 import social.friendship.domain.Friendship.FriendshipID
@@ -6,8 +6,8 @@ import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.User.UserID
+import social.friendship.domain.User
+import social.friendship.domain.User.UserID
 
 interface Processor
 

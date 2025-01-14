@@ -1,10 +1,10 @@
-package social.friendship.social.friendship.infrastructure.persistence.sql
+package social.friendship.infrastructure.persistence.sql
 
 import org.apache.logging.log4j.LogManager
+import social.friendship.application.FriendshipRequestRepository
 import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.infrastructure.persistence.FriendshipRequestRepository
+import social.friendship.domain.User
 import java.sql.PreparedStatement
 
 class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLRepository() {

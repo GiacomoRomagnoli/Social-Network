@@ -8,8 +8,8 @@ import io.vertx.kafka.client.consumer.KafkaConsumer
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord
 import org.apache.logging.log4j.LogManager
 import social.common.events.UserCreated
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.application.FriendshipService
+import social.friendship.application.FriendshipService
+import social.friendship.domain.User
 import java.util.concurrent.Callable
 
 class KafkaFriendshipConsumerVerticle(private val service: FriendshipService) : AbstractVerticle() {

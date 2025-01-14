@@ -1,4 +1,4 @@
-package social.friendship.infrastructure.controller.event
+package social.friendship.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -29,7 +29,7 @@ class KafkaFriendshipProducerVerticle : AbstractVerticle() {
 
     fun publishEvent(event: DomainEvent) {
         when (event) {
-            is FriendshipRemoved -> publish(FriendshipRemoved.TOPIC, mapper.writeValueAsString(event))
+            is FriendshipRemoved -> publish(FriendshipRemoved.Companion.TOPIC, mapper.writeValueAsString(event))
         }
     }
 

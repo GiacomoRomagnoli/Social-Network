@@ -1,9 +1,9 @@
-package social.friendship.social.friendship.infrastructure.persistence.sql
+package social.friendship.infrastructure.persistence.sql
 
+import social.friendship.application.FriendshipRepository
 import social.friendship.domain.Friendship
 import social.friendship.domain.Friendship.FriendshipID
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.infrastructure.persistence.FriendshipRepository
+import social.friendship.domain.User
 import java.sql.PreparedStatement
 
 class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {

@@ -16,13 +16,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
 import social.common.ddd.DomainEvent
 import social.common.events.UserCreated
+import social.friendship.application.FriendshipServiceVerticle
+import social.friendship.domain.User
 import social.friendship.infrastructure.DockerSQLTest
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.application.FriendshipServiceVerticle
-import social.friendship.social.friendship.infrastructure.persistence.sql.DatabaseCredentials
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
+import social.friendship.infrastructure.persistence.sql.DatabaseCredentials
+import social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
+import social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
+import social.friendship.infrastructure.persistence.sql.UserSQLRepository
 import java.io.File
 import java.util.concurrent.CountDownLatch
 

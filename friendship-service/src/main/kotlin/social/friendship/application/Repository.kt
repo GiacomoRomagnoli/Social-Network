@@ -1,4 +1,4 @@
-package social.friendship.social.friendship.infrastructure.persistence
+package social.friendship.application
 
 import social.common.ddd.Repository
 import social.friendship.domain.Friendship
@@ -7,8 +7,8 @@ import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.User.UserID
+import social.friendship.domain.User
+import social.friendship.domain.User.UserID
 
 interface UserRepository : Repository<UserID, User>
 

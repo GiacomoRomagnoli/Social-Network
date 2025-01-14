@@ -1,4 +1,4 @@
-package social.friendship.social.friendship.domain.application
+package social.friendship.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -17,13 +17,12 @@ import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
-import social.friendship.infrastructure.controller.event.KafkaFriendshipProducerVerticle
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.infrastructure.persistence.sql.DatabaseCredentials
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.MessageSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
+import social.friendship.domain.User
+import social.friendship.infrastructure.persistence.sql.DatabaseCredentials
+import social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
+import social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
+import social.friendship.infrastructure.persistence.sql.MessageSQLRepository
+import social.friendship.infrastructure.persistence.sql.UserSQLRepository
 import java.nio.file.Files
 import java.nio.file.Paths
 

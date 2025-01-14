@@ -1,4 +1,4 @@
-package social.friendship.domain.application
+package social.friendship.application
 
 import io.vertx.core.Vertx
 import org.junit.jupiter.api.AfterEach
@@ -14,13 +14,11 @@ import social.common.events.FriendshipRemoved
 import social.friendship.domain.Friendship
 import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.Message
-import social.friendship.infrastructure.controller.event.KafkaFriendshipProducerVerticle
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.application.FriendshipServiceVerticle
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.MessageSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
+import social.friendship.domain.User
+import social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
+import social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
+import social.friendship.infrastructure.persistence.sql.MessageSQLRepository
+import social.friendship.infrastructure.persistence.sql.UserSQLRepository
 import kotlin.test.assertEquals
 
 class FriendshipServiceImplTest {

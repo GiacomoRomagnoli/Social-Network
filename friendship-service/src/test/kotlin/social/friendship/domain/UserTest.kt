@@ -4,8 +4,7 @@ import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.User.UserID
+import social.friendship.domain.User.UserID
 
 class UserTest {
     private val id = "user"

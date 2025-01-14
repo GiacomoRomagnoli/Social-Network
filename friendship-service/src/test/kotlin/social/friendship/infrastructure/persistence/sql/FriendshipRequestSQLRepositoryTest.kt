@@ -10,10 +10,8 @@ import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import social.friendship.domain.FriendshipRequest
+import social.friendship.domain.User
 import social.friendship.infrastructure.DockerSQLTest
-import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
-import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
 import java.io.File
 import java.sql.SQLIntegrityConstraintViolationException
 

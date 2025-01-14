@@ -3,9 +3,9 @@ package social.friendship
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import social.friendship.infrastructure.controller.event.KafkaFriendshipConsumerVerticle
-import social.friendship.infrastructure.controller.event.KafkaFriendshipProducerVerticle
+import social.friendship.application.KafkaFriendshipProducerVerticle
 import social.friendship.infrastructure.controller.rest.RESTFriendshipAPIVerticle
-import social.friendship.social.friendship.domain.application.FriendshipServiceVerticle
+import social.friendship.application.FriendshipServiceVerticle
 
 fun main(args: Array<String>) {
     val vertx: Vertx = Vertx.vertx()
