@@ -8,6 +8,7 @@ interface MessageEvent : DomainEvent
 
 @JsExport
 data class MessageSent(
+    val id: String,
     val sender: String,
     val receiver: String,
     val message: String,
@@ -19,6 +20,7 @@ data class MessageSent(
 
 @JsExport
 data class MessageReceived(
+    val id: String,
     val sender: String,
     val receiver: String,
     val message: String,
