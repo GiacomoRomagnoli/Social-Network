@@ -93,6 +93,26 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
         return messages.toTypedArray()
     }
 
+    override fun findAllMessagesReceivedBy(userID: User.UserID): Iterable<Message> {
+        val ps: PreparedStatement = SQLUtils.prepareStatement(
+            connection,
+            SQLOperation.Query.SELECT_MESSAGES_RECEIVED_BY_USER,
+            userID.value
+        )
+        val result = ps.executeQuery()
+        val messages = mutableListOf<Message>()
+        while (result.next()) {
+            messages.add(
+                Message.of(
+                    UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
+                    User.of(result.getString(SQLColumns.MessageTable.SENDER)),
+                    User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
+                    result.getString(SQLColumns.MessageTable.CONTENT)
+                )
+            )
+        }
+        return messages
+    }
     override fun update(entity: Message) {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
