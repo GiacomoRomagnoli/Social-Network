@@ -44,6 +44,11 @@ object SQLOperation {
             SELECT * FROM message
             WHERE receiver = ?
             """
+        const val SELECT_MESSAGES_EXCHANGED_BETWEEN_USERS =
+            """
+            SELECT * FROM message
+            WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
+            """
         const val SELECT_USER_BY_ID =
             """
             SELECT * FROM user
