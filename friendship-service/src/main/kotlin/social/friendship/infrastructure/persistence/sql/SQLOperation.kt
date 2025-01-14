@@ -5,7 +5,7 @@ object SQLOperation {
         const val SELECT_FRIENDSHIP_BY_ID =
             """
             SELECT * FROM friendship
-            WHERE user_to = ? AND user_from = ?
+            WHERE user1 = ? AND user2 = ?
             """
         const val SELECT_ALL_FRIENDSHIPS =
             """
@@ -43,19 +43,19 @@ object SQLOperation {
     object Update {
         const val INSERT_FRIENDSHIP =
             """
-            INSERT INTO friendship (user_to, user_from)
+            INSERT INTO friendship (user1, user2)
             VALUES (?, ?)
             """
         const val DELETE_FRIENDSHIP_BY_ID =
             """
             DELETE FROM friendship
-            WHERE user_to = ? AND user_from = ?
+            WHERE user1 = ? AND user2 = ?
             """
         const val UPDATE_FRIENDSHIP =
             """
             UPDATE friendship
-            SET user_to = ?, user_from = ?
-            WHERE user_to = ? AND user_from = ?
+            SET user1 = ?, user2 = ?
+            WHERE user1 = ? AND user2 = ?
             """
         const val INSERT_FRIENDSHIP_REQUEST =
             """
@@ -75,7 +75,7 @@ object SQLOperation {
             """
         const val INSERT_MESSAGE =
             """
-            INSERT INTO message (id, user_to, user_from, content)
+            INSERT INTO message (id, sender, receiver, content)
             VALUES (?, ?, ?, ?)
             """
         const val DELETE_MESSAGE_BY_ID =
@@ -87,7 +87,7 @@ object SQLOperation {
             """
             UPDATE message
             SET content = ?
-            WHERE id = ? AND user_to = ? AND user_from = ?
+            WHERE id = ?
             """
         const val INSERT_USER =
             """
