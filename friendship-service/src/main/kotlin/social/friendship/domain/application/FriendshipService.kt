@@ -140,7 +140,12 @@ class FriendshipServiceVerticle(val credentials: DatabaseCredentials? = null, sh
 
     override fun getAllMessagesReceivedByUserId(userID: User.UserID): Iterable<Message> = messageRepository.findAllMessagesReceivedBy(userID)
 
-    override fun getAll(): Array<E> = repository.findAll()
     override fun getAllMessagesExchangedBetween(user1Id: User.UserID, user2Id: User.UserID): Iterable<Message> = messageRepository.findAllMessagesExchangedBetween(user1Id, user2Id)
 
+    override fun addUser(user: User) {
+        userRepository.save(user)
+        vertx.eventBus().publish(UserCreated.TOPIC, mapper.writeValueAsString(User.of(user.id)))
+    }
+
+    override fun getUser(userID: User.UserID): User? = userRepository.findById(userID)
 }

@@ -108,18 +108,18 @@ class FriendshipServiceImplTest {
 
     @Test
     fun addUser() {
-        assertDoesNotThrow { userService.add(user) }
+        assertDoesNotThrow { friendshipService.addUser(user) }
     }
 
     @Test
     fun getUser() {
-        val actual = userService.getById(user.id)
+        val actual = friendshipService.getUser(user.id)
         assertEquals(user, actual)
     }
 
     @Test
     fun getNonExistentUser() {
-        val actual = userService.getById(nonExistingUser.id)
+        val actual = friendshipService.getUser(nonExistingUser.id)
         assertEquals(null, actual)
     }
 
