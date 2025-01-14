@@ -114,23 +114,16 @@ class RESTFriendshipAPIVerticle(private val service: FriendshipService) : Abstra
         vertx.executeBlocking(
             Callable {
                 if (ctx.request().params().isEmpty) {
-                    val friendshipsRetrieved = friendshipService.getAll()
-                    logger.trace("friendships retrieved: '{}'", friendshipsRetrieved)
-
-                    mapper.writeValueAsString(friendshipsRetrieved)
+                    throw IllegalArgumentException("cannot execute get request without parameters")
                 } else {
-                    val requestedUserToID = ctx.request().getParam("to") ?: throw IllegalArgumentException("friendship 'to' is required")
-                    val requestedUserFromID = ctx.request().getParam("from") ?: throw IllegalArgumentException("friendship 'from' is required")
-                    logger.debug("Received GET request with 'to': '{}' and 'from': '{}'", requestedUserToID, requestedUserFromID)
+                    val userId = ctx.request().getParam("id") ?: throw IllegalArgumentException("user 'id' is required")
+                    logger.debug("Received GET request with 'id': {}", userId)
 
-                    val userTo = User.of(requestedUserToID)
-                    val userFrom = User.of(requestedUserFromID)
-                    val friendshipToCheckExistenceOf = Friendship.of(userTo, userFrom)
+                    val user = User.of(userId)
+                    val usersRetrieved = service.getAllFriendsByUserId(user.id)
 
-                    val friendshipRetrieved = friendshipService.getById(friendshipToCheckExistenceOf.id) ?: throw IllegalStateException("friendship not found")
-                    logger.trace("friendship retrieved: '{}'", friendshipRetrieved)
-
-                    mapper.writeValueAsString(friendshipRetrieved)
+                    logger.trace("users retrieved: '{}'", usersRetrieved)
+                    mapper.writeValueAsString(usersRetrieved)
                 }
             }
         ).onComplete {
