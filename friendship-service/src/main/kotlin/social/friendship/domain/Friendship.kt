@@ -10,17 +10,17 @@ import social.friendship.social.friendship.domain.User
 import social.friendship.social.friendship.domain.User.UserID
 
 class Friendship private constructor(
-    @JsonProperty("to") val to: User,
-    @JsonProperty("from") val from: User
-) : AggregateRoot<FriendshipID>(FriendshipID(to.id, from.id)) {
+    @JsonProperty("user1") val user1: User,
+    @JsonProperty("user2") val user2: User
+) : AggregateRoot<FriendshipID>(FriendshipID(user1.id, user2.id)) {
 
     /**
      * Data class to represent the friendship ID.
      */
     data class FriendshipID @JsonCreator constructor(
-        @JsonProperty("to") val to: UserID,
-        @JsonProperty("from") val from: UserID
-    ) : ID<Pair<UserID, UserID>>(Pair(to, from))
+        @JsonProperty("user1") val user1: UserID,
+        @JsonProperty("user2") val user2: UserID
+    ) : ID<Pair<UserID, UserID>>(Pair(user1, user2))
 
     companion object : Factory<Friendship> {
         fun of(to: User, from: User): Friendship {
