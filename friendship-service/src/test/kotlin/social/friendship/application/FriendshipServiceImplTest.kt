@@ -187,8 +187,7 @@ class FriendshipServiceImplTest {
 
     @Test
     fun rejectNonExistentFriendshipRequest() {
-        val actual = friendshipService.rejectFriendshipRequest(nonExistingFriendshipRequest)
-        assertEquals(null, actual)
+        assertThrows<IllegalArgumentException> { friendshipService.rejectFriendshipRequest(nonExistingFriendshipRequest) }
     }
 
     @Test
