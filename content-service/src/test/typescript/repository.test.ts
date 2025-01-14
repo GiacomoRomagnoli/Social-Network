@@ -10,7 +10,8 @@ import {
     FriendshipRepository, getConfiguration,
     PostRepository,
     UserRepository
-} from "../../main/typescript/infrastructure/persistence/repository";
+} from "../../main/typescript/application/repository";
+import {NoReferencedRowError} from "../../main/typescript/infrastructure/persistence/sql/sql-errors";
 
 describe("sql-repository module", () => {
     const shell = require("shelljs");
@@ -28,23 +29,28 @@ describe("sql-repository module", () => {
         friendshipRepository = new SqlFriendshipRepository();
     });
 
-  afterEach(() => {
+    afterEach(() => {
         const result = shell.exec("docker compose down -v");
         console.log(result);
-   });
+    });
 
-   test("save a post with a non existing author", async () => {
+    test("use a repository without connection", async () =>{
+        const post = postFrom("unknown", "unknown@email.com", "should throw");
+        await expect(postRepository.save(post)).rejects.toThrow(TypeError);
+    });
+
+    test("save a post with a non existing author", async () => {
        const post = postFrom("unknown", "unknown@email.com", "should throw");
        await connect(postRepository);
-       await expect(postRepository.save(post)).rejects.toThrow();
+       await expect(postRepository.save(post)).rejects.toThrow(NoReferencedRowError);
    });
 
-   test("save a friendship with non existing users", async () => {
+    test("save a friendship with non existing users", async () => {
        const friend1 = userOf("friend1", "friend1@email.com");
        const friend2 = userOf("friend2", "friend2@email.com");
        const friendship = friendshipOf(friend1, friend2);
        await connect(friendshipRepository);
-       await expect(friendshipRepository.save(friendship)).rejects.toThrow();
+       await expect(friendshipRepository.save(friendship)).rejects.toThrow(NoReferencedRowError);
    });
 
    test("find a post by id", async () => {

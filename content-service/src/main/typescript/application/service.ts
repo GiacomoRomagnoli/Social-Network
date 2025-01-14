@@ -5,7 +5,7 @@ import {
     getConfiguration,
     PostRepository,
     UserRepository
-} from "../infrastructure/persistence/repository";
+} from "./repository";
 import {Feed, Friendship, FriendshipID, Post, PostID, User, UserID} from "../domain/domain";
 
 export interface ContentService extends Service {
@@ -17,6 +17,7 @@ export interface ContentService extends Service {
     deletePost(id: PostID): Promise<Post | undefined>;
     deleteUser(id: UserID): Promise<User | undefined>;
     deleteFriendship(id: FriendshipID): Promise<Friendship | undefined>;
+    init(): Promise<void>;
 }
 
 export class ContentServiceImpl implements ContentService {
