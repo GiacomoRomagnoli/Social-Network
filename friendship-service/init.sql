@@ -1,10 +1,8 @@
-CREATE TABLE user
-(
+CREATE TABLE user (
     id VARCHAR(255) NOT NULL PRIMARY KEY
 );
 
-CREATE TABLE friendship_request
-(
+CREATE TABLE friendship_request (
     user_to VARCHAR(255) NOT NULL,
     user_from VARCHAR(255) NOT NULL,
     FOREIGN KEY (user_to) REFERENCES user(id) ON DELETE CASCADE,
