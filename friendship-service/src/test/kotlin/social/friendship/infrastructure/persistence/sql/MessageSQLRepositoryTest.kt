@@ -29,8 +29,8 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
     private val friendship = Friendship.of(userTo, userFrom)
     private val friendshipRequestRepository = FriendshipRequestSQLRepository()
     private val friendshipRepository = FriendshipSQLRepository()
-    private val message = Message.of(friendship, "content")
-    private val message2 = Message.of(friendship, "content")
+    private val message = Message.of(userTo, userFrom, "content")
+    private val message2 = Message.of(userTo, userFrom, "content")
     private val messageRepository = MessageSQLRepository()
     private lateinit var dockerComposeFile: File
 
@@ -88,7 +88,7 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
     fun doesNotSaveIfSameID() {
         messageRepository.save(message)
         assertThrows<SQLIntegrityConstraintViolationException> {
-            messageRepository.save(Message.of(message.id.value, message.friendship, "otherContent"))
+            messageRepository.save(Message.of(message.id.value, message.sender, message.receiver, "otherContent"))
         }
     }
 
@@ -127,15 +127,14 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
     @Test
     fun updateMessageContent() {
         val id = UUID.randomUUID()
-        val original = Message.of(id, friendship, "content")
+        val original = Message.of(id, userTo, userFrom, "content")
         messageRepository.save(original)
-        val updated = Message.of(id, friendship, "new content")
+        val updated = Message.of(id, userTo, userFrom, "new content")
         messageRepository.update(updated)
         val actual = messageRepository.findById(original.id)
         assertAll(
             { assertTrue(actual != null) },
             { assertTrue(actual?.messageId == updated.messageId) },
-            { assertTrue(actual?.friendship == updated.friendship) },
             { assertTrue(actual?.content == updated.content) }
         )
     }
@@ -143,7 +142,7 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
     @Timeout(5 * 60)
     @Test
     fun updateNonExistingMessage() {
-        val updated = Message.of(friendship, "new content")
+        val updated = Message.of(userTo, userFrom, "new content")
         assertThrows<SQLIntegrityConstraintViolationException> {
             messageRepository.update(updated)
         }
