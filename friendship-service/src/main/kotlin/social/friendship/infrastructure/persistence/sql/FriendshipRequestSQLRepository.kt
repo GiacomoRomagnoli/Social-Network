@@ -1,12 +1,15 @@
 package social.friendship.social.friendship.infrastructure.persistence.sql
 
-import social.common.ddd.Repository
+import org.apache.logging.log4j.LogManager
 import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.social.friendship.domain.User
+import social.friendship.social.friendship.infrastructure.persistence.FriendshipRequestRepository
 import java.sql.PreparedStatement
 
-class FriendshipRequestSQLRepository : Repository<FriendshipRequestID, FriendshipRequest>, AbstractSQLRepository() {
+class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLRepository() {
+    val logger = LogManager.getLogger(this::class)
+
     override fun findById(id: FriendshipRequestID): FriendshipRequest? {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
