@@ -11,12 +11,12 @@ class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQ
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
             SQLOperation.Query.SELECT_FRIENDSHIP_BY_ID,
-            id.to.value,
-            id.from.value
+            id.user1.value,
+            id.user2.value
         )
         val result = ps.executeQuery()
         return if (result.next()) {
-            Friendship.of(User.of(result.getString(SQLColumns.FriendshipTable.TO)), User.of(result.getString(SQLColumns.FriendshipTable.FROM)))
+            Friendship.of(User.of(result.getString(SQLColumns.FriendshipTable.USER_1)), User.of(result.getString(SQLColumns.FriendshipTable.USER_2)))
         } else {
             null
         }
@@ -26,8 +26,8 @@ class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQ
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
             SQLOperation.Update.INSERT_FRIENDSHIP,
-            entity.to.id.value,
-            entity.from.id.value
+            entity.user1.id.value,
+            entity.user2.id.value
         )
         ps.executeUpdate()
     }
@@ -36,12 +36,12 @@ class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQ
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
             SQLOperation.Update.DELETE_FRIENDSHIP_BY_ID,
-            id.to.value,
-            id.from.value
+            id.user1.value,
+            id.user2.value
         )
         val result = ps.executeUpdate()
         return if (result > 0) {
-            Friendship.of(User.of(id.to), User.of(id.from))
+            Friendship.of(User.of(id.user1), User.of(id.user2))
         } else {
             null
         }
@@ -55,7 +55,7 @@ class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQ
         val result = ps.executeQuery()
         val friendships = mutableListOf<Friendship>()
         while (result.next()) {
-            friendships.add(Friendship.of(User.of((result.getString(SQLColumns.FriendshipTable.TO))), User.of((result.getString(SQLColumns.FriendshipTable.FROM)))))
+            friendships.add(Friendship.of(User.of((result.getString(SQLColumns.FriendshipTable.USER_1))), User.of((result.getString(SQLColumns.FriendshipTable.USER_2)))))
         }
         return friendships.toTypedArray()
     }
@@ -64,10 +64,10 @@ class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQ
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
             SQLOperation.Update.UPDATE_FRIENDSHIP,
-            entity.to.id.value,
-            entity.from.id.value,
-            entity.to.id.value,
-            entity.from.id.value
+            entity.user1.id.value,
+            entity.user2.id.value,
+            entity.user1.id.value,
+            entity.user2.id.value
         )
         ps.executeUpdate()
     }
