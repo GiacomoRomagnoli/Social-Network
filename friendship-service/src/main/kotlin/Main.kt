@@ -2,16 +2,20 @@ package social.friendship
 
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
-import social.friendship.infrastructure.controller.event.KafkaFriendshipEventManagerVerticle
+import social.friendship.infrastructure.controller.event.KafkaFriendshipConsumerVerticle
+import social.friendship.infrastructure.controller.event.KafkaFriendshipProducerVerticle
 import social.friendship.infrastructure.controller.rest.RESTFriendshipAPIVerticle
+import social.friendship.social.friendship.domain.application.FriendshipServiceVerticle
 
 fun main(args: Array<String>) {
     val vertx: Vertx = Vertx.vertx()
 
-    val api = RESTFriendshipAPIVerticle()
-    val kafka = KafkaFriendshipEventManagerVerticle()
+    val service = FriendshipServiceVerticle()
+    val api = RESTFriendshipAPIVerticle(service)
+    val producer = KafkaFriendshipProducerVerticle()
+    val consumer = KafkaFriendshipConsumerVerticle(service)
 
-    deployVerticles(vertx, api, kafka)
+    deployVerticles(vertx, api, consumer, producer, service)
 }
 
 private fun deployVerticles(vertx: Vertx, vararg verticles: Verticle) {
