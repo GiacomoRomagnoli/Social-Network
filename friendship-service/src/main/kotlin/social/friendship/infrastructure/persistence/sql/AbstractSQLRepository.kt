@@ -18,4 +18,9 @@ abstract class AbstractSQLRepository {
         )
         connection = SQLUtils.mySQLConnection(host, port, database, username, password)
     }
+
+    fun close() {
+        logger.trace("Closing connection to database")
+        connection.close()
+    }
 }
