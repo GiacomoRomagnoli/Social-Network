@@ -24,8 +24,30 @@ class Message private constructor(
     ) : ID<UUID>(value)
 
     companion object : Factory<Message> {
-        fun of(friendship: Friendship, content: String): Message = Message(UUID.randomUUID(), friendship, content)
+        fun of(sender: User, receiver: User, content: String): Message {
+            return createMessage(UUID.randomUUID(), sender, receiver, content)
+        }
 
-        fun of(messageId: UUID, friendship: Friendship, content: String): Message = Message(messageId, friendship, content)
+        fun of(messageId: UUID, sender: User, receiver: User, content: String): Message {
+            return createMessage(messageId, sender, receiver, content)
+        }
+
+        private fun createMessage(messageId: UUID, sender: User, receiver: User, content: String): Message {
+            checkArguments(sender, receiver, content)
+            return Message(messageId, sender, receiver, content)
+        }
+
+        private fun checkArguments(
+            sender: User,
+            receiver: User,
+            content: String
+        ) {
+            if (sender == receiver) {
+                throw IllegalArgumentException("User cannot send a message to itself")
+            }
+            if (content.isBlank()) {
+                throw IllegalArgumentException("Message content cannot be blank")
+            }
+        }
     }
 }

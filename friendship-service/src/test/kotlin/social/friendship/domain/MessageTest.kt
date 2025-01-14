@@ -51,4 +51,20 @@ class MessageTest {
 
         assertEquals(id, message1.id.value)
     }
+
+    @Test
+    fun throwsExceptionIfNoContent() {
+        assertAll(
+            { assertThrows<IllegalArgumentException> { Message.of(sender, receiver, "") } },
+            { assertThrows<IllegalArgumentException> { Message.of(UUID.randomUUID(), sender, receiver, "") } }
+        )
+    }
+
+    @Test
+    fun throwsExceptionIfSenderEqualsReceiver() {
+        assertAll(
+            { assertThrows<IllegalArgumentException> { Message.of(sender, sender, "content") } },
+            { assertThrows<IllegalArgumentException> { Message.of(UUID.randomUUID(), sender, sender, "content") } }
+        )
+    }
 }
