@@ -21,10 +21,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
         return if (result.next()) {
             Message.of(
                 UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
-                Friendship.of(
-                    User.of(result.getString(SQLColumns.MessageTable.TO)),
-                    User.of(result.getString(SQLColumns.MessageTable.FROM))
-                ),
+                User.of(result.getString(SQLColumns.MessageTable.SENDER)),
+                User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
                 result.getString(SQLColumns.MessageTable.CONTENT)
             )
         } else {
@@ -37,8 +35,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
             connection,
             SQLOperation.Update.INSERT_MESSAGE,
             entity.id.value.toString(),
-            entity.friendship.to.id.value,
-            entity.friendship.from.id.value,
+            entity.sender.id.value,
+            entity.receiver.id.value,
             entity.content
         )
         ps.executeUpdate()
@@ -86,10 +84,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
             messages.add(
                 Message.of(
                     UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
-                    Friendship.of(
-                        User.of(result.getString(SQLColumns.MessageTable.TO)),
-                        User.of(result.getString(SQLColumns.MessageTable.FROM))
-                    ),
+                    User.of(result.getString(SQLColumns.MessageTable.SENDER)),
+                    User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
                     result.getString(SQLColumns.MessageTable.CONTENT)
                 )
             )
@@ -103,8 +99,6 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
             SQLOperation.Update.UPDATE_MESSAGE,
             entity.content,
             entity.id.value.toString(),
-            entity.friendship.to.id.value,
-            entity.friendship.from.id.value
         )
         if (ps.executeUpdate() == 0) {
             throw SQLIntegrityConstraintViolationException("no rows affected")
