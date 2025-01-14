@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -30,7 +29,7 @@ import social.friendship.infrastructure.persistence.sql.DatabaseCredentials
 import java.io.File
 import java.util.concurrent.CountDownLatch
 
-object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
+class RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private val logger = LogManager.getLogger(this::class)
     private val user1 = User.of("user1ID")
     private val user2 = User.of("user2ID")
@@ -51,21 +50,17 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private lateinit var dockerComposeFile: File
     private lateinit var api: RESTFriendshipAPIVerticle
     private lateinit var service: FriendshipServiceVerticle
+    private lateinit var vertx: Vertx
     private val mapper: ObjectMapper = jacksonObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
     }
 
-    @JvmStatic
-    @BeforeAll
-    fun setUpAll() {
-        dockerComposeFile = generateDockerComposeFile("social/friendship/infrastructure/controller/rest/")
-    }
-
     @BeforeEach
     fun setUp() {
+        dockerComposeFile = generateDockerComposeFile("social/friendship/infrastructure/controller/rest/")
         executeDockerComposeCmd(dockerComposeFile, "up", "--wait")
 
-        val vertx = Vertx.vertx()
+        vertx = Vertx.vertx()
         service = FriendshipServiceVerticle(DatabaseCredentials(host, port, database, user, password))
         deployVerticle(vertx, service)
         api = RESTFriendshipAPIVerticle(service)
@@ -93,6 +88,16 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     @AfterEach
     fun tearDown() {
         executeDockerComposeCmd(dockerComposeFile, "down", "-v")
+
+        val latch = CountDownLatch(1)
+        vertx.close().onComplete {
+            if (it.succeeded()) {
+                logger.info("Vert.x instance closed")
+            } else {
+                logger.error("Failed to close Vert.x instance:", it.cause())
+            }
+            latch.countDown()
+        }
     }
 
     private fun sendPostRequest(
