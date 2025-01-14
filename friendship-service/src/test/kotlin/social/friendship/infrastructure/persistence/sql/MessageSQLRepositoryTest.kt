@@ -177,14 +177,14 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
 
     @Timeout(5 * 60)
     @Test
-    fun deleteMessageIfFriendshipIsDeleted() {
+    fun keepTheMessagesIfFriendshipIsDeleted() {
         messageRepository.save(message)
         val before = messageRepository.findById(message.id)
         friendshipRepository.deleteById(friendship.id)
         val after = messageRepository.findById(message.id)
         assertAll(
             { assertEquals(message, before) },
-            { assertEquals(null, after) }
+            { assertEquals(message, after) }
         )
     }
 }
