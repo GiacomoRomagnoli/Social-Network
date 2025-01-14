@@ -536,4 +536,27 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         latch.await()
         assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
     }
+
+    private fun sendPutRequest(
+        send: JsonObject?,
+        latch: CountDownLatch,
+        endpoint: String
+    ): HttpResponse<String> {
+        val responseLatch = CountDownLatch(1)
+        lateinit var response: HttpResponse<String>
+        webClient.put(endpoint)
+            .putHeader("content-type", "application/json")
+            .`as`(BodyCodec.string())
+            .sendJsonObject(send) { ar ->
+                latch.countDown()
+                if (ar.succeeded()) {
+                    response = ar.result()
+                } else {
+                    throw ar.cause()
+                }
+                responseLatch.countDown()
+            }
+        responseLatch.await()
+        return response
+    }
 }
