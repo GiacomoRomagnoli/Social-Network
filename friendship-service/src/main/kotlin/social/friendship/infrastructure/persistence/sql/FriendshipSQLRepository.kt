@@ -1,12 +1,12 @@
 package social.friendship.social.friendship.infrastructure.persistence.sql
 
-import social.common.ddd.Repository
 import social.friendship.domain.Friendship
 import social.friendship.domain.Friendship.FriendshipID
 import social.friendship.social.friendship.domain.User
+import social.friendship.social.friendship.infrastructure.persistence.FriendshipRepository
 import java.sql.PreparedStatement
 
-class FriendshipSQLRepository : Repository<FriendshipID, Friendship>, AbstractSQLRepository() {
+class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
     override fun findById(id: FriendshipID): Friendship? {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
