@@ -2,22 +2,23 @@ package social.friendship.domain
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
+import org.junit.jupiter.api.assertThrows
 import social.friendship.social.friendship.domain.User
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 class MessageTest {
-    private val to = User.of("to")
-    private val from = User.of("from")
+    private val sender = User.of("sender")
+    private val receiver = User.of("receiver")
 
     @Test
     fun messageCreation() {
-        val message = Message.of(Friendship.of(to, from), "content")
+        val message = Message.of(sender, receiver, "content")
 
         assertAll(
-            { assertEquals(to, message.friendship.to) },
-            { assertEquals(from, message.friendship.from) },
+            { assertEquals(sender, message.sender) },
+            { assertEquals(receiver, message.receiver) },
             { assertEquals("content", message.content) }
         )
     }
@@ -25,20 +26,20 @@ class MessageTest {
     @Test
     fun messageCreationWithSetID() {
         val id: UUID = UUID.randomUUID()
-        val message = Message.of(id, Friendship.of(to, from), "content")
+        val message = Message.of(id, sender, receiver, "content")
 
         assertAll(
             { assertEquals(id, message.id.value) },
-            { assertEquals(to, message.friendship.to) },
-            { assertEquals(from, message.friendship.from) },
+            { assertEquals(sender, message.sender) },
+            { assertEquals(receiver, message.receiver) },
             { assertEquals("content", message.content) }
         )
     }
 
     @Test
     fun eachMessageHasAUniqueIdentifier() {
-        val message1 = Message.of(Friendship.of(to, from), "content")
-        val message2 = Message.of(Friendship.of(to, from), "content")
+        val message1 = Message.of(sender, receiver, "content")
+        val message2 = Message.of(sender, receiver, "content")
 
         assertNotEquals(message1.id, message2.id)
     }
@@ -46,7 +47,7 @@ class MessageTest {
     @Test
     fun testSetIdentifier() {
         val id: UUID = UUID.randomUUID()
-        val message1 = Message.of(id, Friendship.of(to, from), "content")
+        val message1 = Message.of(id, sender, receiver, "content")
 
         assertEquals(id, message1.id.value)
     }
