@@ -20,6 +20,16 @@ object SQLOperation {
             """
             SELECT * FROM friendship_request
             """
+        const val SELECT_FRIENDSHIPS_OF_USER =
+            """
+            SELECT * FROM friendship
+            WHERE user1 = ? OR user2 = ?
+            """
+        const val SELECT_FRIENDSHIP_REQUESTS_OF_USER =
+            """
+            SELECT * FROM friendship_request
+            WHERE user_to = ? OR user_from = ?
+            """
         const val SELECT_MESSAGE_BY_ID =
             """
             SELECT * FROM message
