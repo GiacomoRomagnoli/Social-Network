@@ -208,4 +208,24 @@ object MessageSQLRepositoryTest : DockerSQLTest() {
         val messages = messageRepository.findAllMessagesReceivedBy(userTo.id).toList()
         assertTrue(messages.isEmpty())
     }
+
+    @Timeout(5 * 60)
+    @Test
+    fun findAllMessagesExchangedBetweenUsers() {
+        messageRepository.save(message)
+        messageRepository.save(message2)
+        val messages = messageRepository.findAllMessagesExchangedBetween(userTo.id, userFrom.id).toList()
+        assertAll(
+            { assertTrue(messages.size == 2) },
+            { assertTrue(messages.contains(message)) },
+            { assertTrue(messages.contains(message2)) },
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun findAllMessagesExchangedBetweenUsersReturnsEmptyListIfNoMessages() {
+        val messages = messageRepository.findAllMessagesExchangedBetween(userTo.id, userFrom.id).toList()
+        assertTrue(messages.isEmpty())
+    }
 }
