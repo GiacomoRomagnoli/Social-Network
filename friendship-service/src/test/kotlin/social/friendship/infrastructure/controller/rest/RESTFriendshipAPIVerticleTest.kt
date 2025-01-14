@@ -226,15 +226,15 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         val latch = CountDownLatch(1)
 
         // adds users, friendship request and friendship to the database to be able to add a message
-        userRepository.save(user1)
-        userRepository.save(user2)
-        friendshipRequestRepository.save(friendshipRequest1)
-        friendshipRepository.save(friendship1)
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+        service.addFriendship(friendship1)
 
         val messageJsonString = mapper.writeValueAsString(message1)
         val messageJson = JsonObject(messageJsonString)
 
-        val response = sendPostRequest(messageJson, latch, Endpoint.MESSAGE)
+        val response = sendPostRequest(messageJson, latch, Endpoint.MESSAGE_SEND)
 
         latch.await()
         assertEquals(StatusCode.CREATED, response.statusCode())
@@ -311,34 +311,28 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
 
     @Timeout(5 * 60)
     @Test
-    fun getMessageWithoutUserAndIDParam() {
+    fun getMessageWithWrongParamFromMessageReceiveEndpoint() {
         val latch = CountDownLatch(1)
 
-        val response1 = sendGetRequest("to", message1.friendship.to.id.value, latch, Endpoint.MESSAGE)
-        val response2 = sendGetRequest("from", message1.friendship.from.id.value, latch, Endpoint.MESSAGE)
-        val response3 = sendGetRequest("id", message1.id.value.toString(), latch, Endpoint.MESSAGE)
+        val response = sendGetRequest("wrong_parameter", message1.sender.id.value, latch, Endpoint.MESSAGE_RECEIVE)
 
         latch.await()
-        assertAll(
-            { assertEquals(StatusCode.BAD_REQUEST, response1.statusCode()) },
-            { assertEquals(StatusCode.BAD_REQUEST, response2.statusCode()) },
-            { assertEquals(StatusCode.BAD_REQUEST, response3.statusCode()) }
-        )
+        assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
     }
 
     @Timeout(5 * 60)
     @Test
-    fun getAllMessages() {
+    fun getAllMessagesFromReceiveEndpoint() {
         val latch = CountDownLatch(1)
 
         // adds users, friendship request, friendship and message to the database to be able to get all messages
-        userRepository.save(user1)
-        userRepository.save(user2)
-        friendshipRequestRepository.save(friendshipRequest1)
-        friendshipRepository.save(friendship1)
-        listOf(message1, message2, message3).forEach { messageRepository.save(it) }
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+        service.addFriendship(friendship1)
+        listOf(message1, message2, message3).forEach { service.receivedMessage(it) }
 
-        val response = sendGetRequest(latch, Endpoint.MESSAGE)
+        val response = sendGetRequest("id", user2.id.value, latch, Endpoint.MESSAGE_RECEIVE)
 
         val actual = mapper.readValue(response.body(), Array<Message>::class.java)
         val expected = arrayOf(message1, message2, message3)
@@ -346,7 +340,7 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         latch.await()
         assertAll(
             { assertEquals(StatusCode.OK, response.statusCode()) },
-            { assertEquals(actual.size, expected.size) }
+            { assertEquals(expected.size, actual.size) }
         )
     }
 
