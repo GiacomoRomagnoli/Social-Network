@@ -58,8 +58,9 @@ class FriendshipTest {
 
     @Test
     fun cannotCreateFriendshipWithSameUser() {
-        assertThrows<IllegalArgumentException> {
-            Friendship.of(from, from)
-        }
+        assertAll(
+            { assertThrows<IllegalArgumentException> { Friendship.of(user1, user1) } },
+            { assertThrows<IllegalArgumentException> { Friendship.of(FriendshipRequest.of(user1, user1)) } }
+        )
     }
 }

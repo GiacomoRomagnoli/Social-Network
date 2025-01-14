@@ -23,13 +23,28 @@ class Friendship private constructor(
     ) : ID<Pair<UserID, UserID>>(Pair(user1, user2))
 
     companion object : Factory<Friendship> {
-        fun of(to: User, from: User): Friendship {
-            if (to == from) {
-                throw IllegalArgumentException("User cannot be friend with itself")
-            }
-            return Friendship(to, from)
+        fun of(user1: User, user2: User): Friendship {
+            return createFriendship(user1, user2)
         }
 
-        fun of(request: FriendshipRequest): Friendship = Friendship(request.to, request.from)
+        fun of(request: FriendshipRequest): Friendship {
+            return createFriendship(request.to, request.from)
+        }
+
+        private fun createFriendship(user1: User, user2: User): Friendship {
+            checkArguments(user1, user2)
+            return if (user1.id.value < user2.id.value) {
+                Friendship(user1, user2)
+            } else {
+                Friendship(user2, user1)
+            }
+        }
+
+        private fun checkArguments(
+            user1: User,
+            user2: User
+        ) {
+            require(user1 != user2) { "User cannot be friend with itself" }
+        }
     }
 }
