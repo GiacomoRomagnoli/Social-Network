@@ -1,16 +1,15 @@
 package social.friendship.social.friendship.infrastructure.persistence.sql
 
-import social.common.ddd.Repository
-import social.friendship.domain.Friendship
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
 import social.friendship.social.friendship.domain.User
+import social.friendship.social.friendship.infrastructure.persistence.MessageRepository
 import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.UUID
 
-class MessageSQLRepository : Repository<MessageID, Message>, AbstractSQLRepository() {
+class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
 
     override fun findById(id: MessageID): Message? {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
