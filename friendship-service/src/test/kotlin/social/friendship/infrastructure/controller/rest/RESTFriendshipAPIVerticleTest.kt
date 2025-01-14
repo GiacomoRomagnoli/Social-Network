@@ -90,12 +90,6 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         webClient = WebClient.create(vertx, WebClientOptions().setDefaultPort(8080).setDefaultHost("localhost"))
     }
 
-    private fun connectToDatabase() {
-        listOf(userRepository, friendshipRequestRepository, friendshipRepository, messageRepository).forEach {
-            it.connect(host, port, database, user, password)
-        }
-    }
-
     @AfterEach
     fun tearDown() {
         executeDockerComposeCmd(dockerComposeFile, "down", "-v")
@@ -133,11 +127,11 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         val friendshipJson = JsonObject(friendshipJsonString)
 
         val friendshipWithoutUserToJson = friendshipJson.copy()
-        friendshipWithoutUserToJson.remove("to")
+        friendshipWithoutUserToJson.remove("user1")
         val response1 = sendPostRequest(friendshipWithoutUserToJson, latch, Endpoint.FRIENDSHIP)
 
         val friendshipWithoutUserFromJson = friendshipJson.copy()
-        friendshipWithoutUserFromJson.remove("from")
+        friendshipWithoutUserFromJson.remove("user2")
         val response2 = sendPostRequest(friendshipWithoutUserFromJson, latch, Endpoint.FRIENDSHIP)
 
         latch.await()
@@ -290,8 +284,8 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     fun getFriendshipWithoutUsersParam() {
         val latch = CountDownLatch(2)
 
-        val response1 = sendGetRequest("to", friendship1.to.id.value, latch, Endpoint.FRIENDSHIP)
-        val response2 = sendGetRequest("from", friendship1.from.id.value, latch, Endpoint.FRIENDSHIP)
+        val response1 = sendGetRequest("to", friendship1.user1.id.value, latch, Endpoint.FRIENDSHIP)
+        val response2 = sendGetRequest("from", friendship1.user2.id.value, latch, Endpoint.FRIENDSHIP)
 
         latch.await()
         assertAll(
@@ -379,23 +373,17 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
 
     @Timeout(5 * 60)
     @Test
-    fun getAllFriendships() {
+    fun getFriendshipsWithWrongParams() {
         val latch = CountDownLatch(1)
 
         // adds users, friendship request and friendship to the database to be able to get all friendships
-        listOf(user1, user2, user3, user4, user5, user6).forEach { userRepository.save(it) }
-        listOf(friendshipRequest1, friendshipRequest2, friendshipRequest3).forEach { friendshipRequestRepository.save(it) }
-        listOf(friendship1, friendship2, friendship3).forEach { friendshipRepository.save(it) }
+        listOf(user1, user2, user3, user4, user5, user6).forEach { service.addUser(it) }
+        listOf(friendshipRequest1, friendshipRequest2, friendshipRequest3).forEach { service.addFriendshipRequest(it) }
+        listOf(friendship1, friendship2, friendship3).forEach { service.addFriendship(it) }
 
-        val response = sendGetRequest(latch, Endpoint.FRIENDSHIP)
-
-        val actual = mapper.readValue(response.body(), Array<Friendship>::class.java)
-        val expected = arrayOf(friendship1, friendship2, friendship3)
+        val response = sendGetRequest("wrongParamName", user1.id.value, latch, Endpoint.FRIENDSHIP)
 
         latch.await()
-        assertAll(
-            { assertEquals(StatusCode.OK, response.statusCode()) },
-            { assertEquals(actual.size, expected.size) }
-        )
+        assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
     }
 }
