@@ -18,8 +18,28 @@ CREATE TABLE friendship (
     PRIMARY KEY (user1, user2)
 );
 
-CREATE TABLE message
-(
+-- Cambia il delimitatore per distinguere le istruzioni procedurali dalle normali query SQL
+DELIMITER $$
+
+-- Crea un trigger che si attiva prima di ogni inserimento nella tabella 'friendship', in modo da garantire che user1
+-- sia sempre minore di user2 per ogni riga inserita, in modo da rendere indifferente l'ordine di inserimento
+CREATE TRIGGER before_insert_friendship
+    BEFORE INSERT ON friendship  -- Specifica che il trigger si applica alla tabella 'friendship'
+    FOR EACH ROW                 -- Indica che il trigger si attiva per ogni riga inserita
+    BEGIN
+        -- Controlla se il valore degli utenti user1 e user2, sono in ordine crescente
+        IF NEW.user1 > NEW.user2 THEN
+                -- Crea una variabile temporanea per effettuare lo scambio dei valori ed effettua lo scambio
+                SET @temp = NEW.user1;
+                SET NEW.user1 = NEW.user2;
+                SET NEW.user2 = @temp;
+    END IF;
+END $$
+
+-- Ripristina il delimitatore standard
+DELIMITER ;
+
+CREATE TABLE message (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
     sender VARCHAR(255) NOT NULL,
     receiver VARCHAR(255) NOT NULL,
