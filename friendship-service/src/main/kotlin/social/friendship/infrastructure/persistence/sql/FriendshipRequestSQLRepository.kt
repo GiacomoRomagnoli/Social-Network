@@ -63,6 +63,24 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
         return friendshipRequests.toTypedArray()
     }
 
+    override fun getAllFriendshipRequestsOf(userId: User.UserID): Iterable<FriendshipRequest> {
+        val ps: PreparedStatement = SQLUtils.prepareStatement(
+            connection,
+            SQLOperation.Query.SELECT_FRIENDSHIP_REQUESTS_OF_USER,
+            userId.value,
+            userId.value,
+        )
+        val result = ps.executeQuery()
+        val friendshipRequests = mutableListOf<FriendshipRequest>()
+        while (result.next()) {
+            val userTo = User.of(result.getString(SQLColumns.FriendshipRequestTable.TO))
+            val userFrom = User.of(result.getString(SQLColumns.FriendshipRequestTable.FROM))
+            val friendshipRequest = FriendshipRequest.of(userTo, userFrom)
+            friendshipRequests.add(friendshipRequest)
+        }
+        return friendshipRequests.toList()
+    }
+
     override fun update(entity: FriendshipRequest) {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,

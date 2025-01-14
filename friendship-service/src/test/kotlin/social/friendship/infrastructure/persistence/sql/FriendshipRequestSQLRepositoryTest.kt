@@ -151,4 +151,32 @@ object FriendshipRequestSQLRepositoryTest : DockerSQLTest() {
             { assertEquals(null, after) }
         )
     }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getAllFriendshipRequestsOfUser() {
+        val friendshipRequest1 = FriendshipRequest.of(userTo, userFrom)
+        val friendshipRequest2 = FriendshipRequest.of(userTo, userFrom2)
+        friendshipRequestRepository.save(friendshipRequest1)
+        friendshipRequestRepository.save(friendshipRequest2)
+        val actualUserTo = friendshipRequestRepository.getAllFriendshipRequestsOf(userTo.id).toList()
+        val actualUserFrom = friendshipRequestRepository.getAllFriendshipRequestsOf(userFrom.id).toList()
+        val actualUserFrom2 = friendshipRequestRepository.getAllFriendshipRequestsOf(userFrom2.id).toList()
+
+        assertAll(
+            { assertTrue(actualUserTo.size == 2) },
+            { assertTrue(actualUserTo.containsAll(listOf(friendshipRequest1, friendshipRequest2))) },
+            { assertTrue(actualUserFrom.size == 1) },
+            { assertTrue(actualUserFrom.contains(friendshipRequest1)) },
+            { assertTrue(actualUserFrom2.size == 1) },
+            { assertTrue(actualUserFrom2.contains(friendshipRequest2)) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getAllFriendshipRequestsOfUserReturnsEmptyListIfNoRequests() {
+        val actual = friendshipRequestRepository.getAllFriendshipRequestsOf(userTo.id).toList()
+        assertTrue(actual.isEmpty())
+    }
 }
