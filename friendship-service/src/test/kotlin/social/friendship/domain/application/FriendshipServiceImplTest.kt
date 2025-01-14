@@ -1,57 +1,102 @@
 package social.friendship.domain.application
 
+import io.vertx.core.Vertx
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.mockito.Mockito.mock
+import org.junit.jupiter.api.assertThrows
+import org.mockito.Mock
+import org.mockito.Mockito.doNothing
 import org.mockito.Mockito.`when`
-import social.common.ddd.Repository
+import org.mockito.MockitoAnnotations
+import social.common.events.FriendshipRemoved
 import social.friendship.domain.Friendship
-import social.friendship.domain.Friendship.FriendshipID
 import social.friendship.domain.FriendshipRequest
-import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.domain.Message
-import social.friendship.domain.Message.MessageID
+import social.friendship.infrastructure.controller.event.KafkaFriendshipProducerVerticle
 import social.friendship.social.friendship.domain.User
-import social.friendship.social.friendship.domain.User.UserID
-import social.friendship.social.friendship.domain.application.FriendshipService
-import social.friendship.social.friendship.domain.application.FriendshipServiceImpl
+import social.friendship.social.friendship.domain.application.FriendshipServiceVerticle
 import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepository
 import social.friendship.social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
 import social.friendship.social.friendship.infrastructure.persistence.sql.MessageSQLRepository
 import social.friendship.social.friendship.infrastructure.persistence.sql.UserSQLRepository
-import kotlin.jvm.java
-import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class FriendshipServiceImplTest {
-    private val userRepository: Repository<UserID, User> = mock(UserSQLRepository::class.java)
-    private val userService: FriendshipService<UserID, User> = FriendshipServiceImpl(userRepository)
     private val user = User.of("id")
     private val nonExistingUser = User.of("nonExistingUserId")
-
-    private val friendshipRepository: Repository<FriendshipID, Friendship> = mock(FriendshipSQLRepository::class.java)
-    private val friendshipService: FriendshipService<FriendshipID, Friendship> = FriendshipServiceImpl(friendshipRepository)
     private val userTo = User.of("userToID")
     private val userFrom = User.of("userFromID")
     private val friendship = Friendship.of(userTo, userFrom)
     private val nonExistingUserTo = User.of("nonExistingUserToID")
     private val nonExistingUserFrom = User.of("nonExistingUserFromID")
     private val nonExistingFriendship = Friendship.of(nonExistingUserTo, nonExistingUserFrom)
-
-    private val friendshipRequestRepository: Repository<FriendshipRequestID, FriendshipRequest> = mock(FriendshipRequestSQLRepository::class.java)
-    private val friendshipRequestService: FriendshipService<FriendshipRequestID, FriendshipRequest> = FriendshipServiceImpl(friendshipRequestRepository)
     private val friendshipRequest = FriendshipRequest.of(userTo, userFrom)
     private val nonExistingFriendshipRequest = FriendshipRequest.of(nonExistingUserTo, nonExistingUserFrom)
+    private val sender = userTo
+    private val receiver = userFrom
+    private val nonExistingSender = nonExistingUserTo
+    private val nonExistingReceiver = nonExistingUserFrom
+    private val message = Message.of(sender, receiver, "content")
+    private val nonExistingMessage = Message.of(nonExistingSender, nonExistingReceiver, "content")
+    private val friendshipRemovedEvent = FriendshipRemoved(sender.id.value, receiver.id.value)
+    private lateinit var friendshipService: FriendshipServiceVerticle
+    private lateinit var closeable: AutoCloseable
+    @Mock
+    private lateinit var userRepository: UserSQLRepository
+    @Mock
+    private lateinit var friendshipRepository: FriendshipSQLRepository
+    @Mock
+    private lateinit var friendshipRequestRepository: FriendshipRequestSQLRepository
+    @Mock
+    private lateinit var messageRepository: MessageSQLRepository
+    @Mock
+    private lateinit var kafkaProducer: KafkaFriendshipProducerVerticle
 
-    private val messageRepository: Repository<MessageID, Message> = mock(MessageSQLRepository::class.java)
-    private val messageService: FriendshipService<MessageID, Message> = FriendshipServiceImpl(messageRepository)
-    private val message = Message.of(friendship, "content")
-    private val nonExistingMessage = Message.of(nonExistingFriendship, "content")
+    @BeforeEach
+    fun setUp() {
+        closeable = MockitoAnnotations.openMocks(this)
+        friendshipService = FriendshipServiceVerticle(shouldConnectToDB = false)
+        friendshipService.apply {
+            this::class.java.getDeclaredField("userRepository").apply {
+                isAccessible = true
+                set(this@FriendshipServiceImplTest.friendshipService, userRepository)
+            }
+            this::class.java.getDeclaredField("friendshipRepository").apply {
+                isAccessible = true
+                set(this@FriendshipServiceImplTest.friendshipService, friendshipRepository)
+            }
+            this::class.java.getDeclaredField("friendshipRequestRepository").apply {
+                isAccessible = true
+                set(this@FriendshipServiceImplTest.friendshipService, friendshipRequestRepository)
+            }
+            this::class.java.getDeclaredField("messageRepository").apply {
+                isAccessible = true
+                set(this@FriendshipServiceImplTest.friendshipService, messageRepository)
+            }
+            this::class.java.getDeclaredField("kafkaProducer").apply {
+                isAccessible = true
+                set(this@FriendshipServiceImplTest.friendshipService, kafkaProducer)
+            }
+        }
+
+        `when`(friendshipRepository.findById(friendship.id)).thenReturn(friendship)
+        `when`(friendshipRepository.deleteById(friendship.id)).thenReturn(friendship)
+        `when`(friendshipRepository.findAllFriendsOf(user.id)).thenReturn(listOf(user))
 
     init {
         `when`(userRepository.findById(user.id)).thenReturn(user)
-        `when`(friendshipRepository.findById(friendship.id)).thenReturn(friendship)
-        `when`(friendshipRequestRepository.findById(friendshipRequest.id)).thenReturn(friendshipRequest)
-        `when`(messageRepository.findById(message.id)).thenReturn(message)
+
+        doNothing().`when`(kafkaProducer).publishEvent(friendshipRemovedEvent)
+
+        val vertx = Vertx.vertx()
+        vertx.deployVerticle(friendshipService)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        closeable.close()
     }
 
     @Test
@@ -73,19 +118,43 @@ class FriendshipServiceImplTest {
 
     @Test
     fun addFriendship() {
-        assertDoesNotThrow { friendshipService.add(friendship) }
+        assertDoesNotThrow { friendshipService.addFriendship(friendship) }
     }
 
     @Test
     fun getFriendship() {
-        val actual = friendshipService.getById(friendship.id)
+        val actual = friendshipService.getFriendship(friendship.id)
         assertEquals(friendship, actual)
     }
 
     @Test
     fun getNonExistentFriendship() {
-        val actual = friendshipService.getById(nonExistingFriendship.id)
+        val actual = friendshipService.getFriendship(nonExistingFriendship.id)
         assertEquals(null, actual)
+    }
+
+    @Test
+    fun deleteFriendship() {
+        val actual = friendshipService.deleteFriendship(friendship.id)
+        assertEquals(friendship, actual)
+    }
+
+    @Test
+    fun deleteNonExistingFriendship() {
+        val actual = friendshipService.deleteFriendship(nonExistingFriendship.id)
+        assertEquals(null, actual)
+    }
+
+    @Test
+    fun getAllFriendsOfUser() {
+        val actual = friendshipService.getAllFriendsByUserId(user.id)
+        assertEquals(listOf(user), actual)
+    }
+
+    @Test
+    fun getAllFriendsOfNonExistingUser() {
+        val actual = friendshipService.getAllFriendsByUserId(nonExistingUser.id)
+        assertEquals(emptyList(), actual)
     }
 
     @Test
