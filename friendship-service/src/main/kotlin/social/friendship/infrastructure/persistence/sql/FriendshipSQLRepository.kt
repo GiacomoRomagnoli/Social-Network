@@ -60,6 +60,26 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
         return friendships.toTypedArray()
     }
 
+    override fun findAllFriendsOf(userID: User.UserID): Iterable<User> {
+        val ps: PreparedStatement = SQLUtils.prepareStatement(
+            connection,
+            SQLOperation.Query.SELECT_FRIENDSHIPS_OF_USER,
+            userID.value,
+            userID.value
+        )
+        val result = ps.executeQuery()
+        val friends = mutableListOf<User>()
+        while (result.next()) {
+            val users = listOf(
+                User.of(result.getString(SQLColumns.FriendshipTable.USER_1)),
+                User.of(result.getString(SQLColumns.FriendshipTable.USER_2))
+            )
+            users.filter { it.id != userID }
+                .forEach { friends.add(it) }
+        }
+        return friends.toList()
+    }
+
     override fun update(entity: Friendship) {
         val ps: PreparedStatement = SQLUtils.prepareStatement(
             connection,
