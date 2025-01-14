@@ -6,11 +6,13 @@ import social.common.ddd.AggregateRoot
 import social.common.ddd.Factory
 import social.common.ddd.ID
 import social.friendship.domain.Message.MessageID
+import social.friendship.social.friendship.domain.User
 import java.util.UUID
 
 class Message private constructor(
     @JsonProperty("messageId") val messageId: UUID,
-    @JsonProperty("friendship") val friendship: Friendship,
+    @JsonProperty("sender") val sender: User,
+    @JsonProperty("receiver") val receiver: User,
     @JsonProperty("content") val content: String
 ) : AggregateRoot<MessageID>(MessageID(messageId)) {
 
