@@ -52,7 +52,14 @@ class RESTFriendshipAPIVerticle(private val service: FriendshipService) : Abstra
                 is IllegalArgumentException, is MismatchedInputException -> sendResponse(ctx, StatusCode.BAD_REQUEST, error.message)
                 is IllegalStateException -> sendResponse(ctx, StatusCode.NOT_FOUND, error.message)
                 is SQLIntegrityConstraintViolationException -> sendResponse(ctx, StatusCode.FORBIDDEN, error.message)
-                is SQLException -> sendResponse(ctx, StatusCode.INTERNAL_SERVER_ERROR, error.message)
+                is SQLException -> {
+                    when (error.sqlState) {
+                        SQLStateError.MISSING_FRIENDSHIP -> sendResponse(ctx, StatusCode.FORBIDDEN, error.message)
+                        else -> {
+                            sendResponse(ctx, StatusCode.INTERNAL_SERVER_ERROR, error.message)
+                        }
+                    }
+                }
                 else -> sendResponse(ctx, StatusCode.INTERNAL_SERVER_ERROR, error.message)
             }
         }
