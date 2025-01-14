@@ -157,6 +157,26 @@ class RESTFriendshipAPIVerticle(private val service: FriendshipService) : Abstra
         }
     }
 
+    private fun acceptFriendshipRequest(ctx: RoutingContext) {
+        vertx.executeBlocking(
+            Callable {
+                val requestBody = ctx.body().asString()
+                logger.debug("Received PUT request with body: '{}'", requestBody)
+
+                val friendshipRequest: FriendshipRequest = mapper.readValue(requestBody, FriendshipRequest::class.java)
+                service.acceptFriendshipRequest(friendshipRequest)
+            }
+        ).onComplete {
+            if (it.succeeded()) {
+                logger.trace("friendship request updated successfully")
+                sendResponse(ctx, StatusCode.OK)
+            } else {
+                logger.warn("failed to update friendship request:", it.cause())
+                sendErrorResponse(ctx, it.cause())
+            }
+        }
+    }
+
     private fun getFriendshipRequest(ctx: RoutingContext) {
         vertx.executeBlocking(
             Callable {

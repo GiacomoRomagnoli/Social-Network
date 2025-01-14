@@ -559,4 +559,49 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         responseLatch.await()
         return response
     }
+
+    @Timeout(5 * 60)
+    @Test
+    fun acceptUnexistingFriendshipRequest() {
+        val latch = CountDownLatch(1)
+
+        val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest1)
+        val friendshipRequestJson = JsonObject(friendshipRequestJsonString)
+
+        val response = sendPutRequest(friendshipRequestJson, latch, Endpoint.FRIENDSHIP_REQUEST_ACCEPT)
+
+        latch.await()
+        assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun acceptFriendshipRequest() {
+        val latch = CountDownLatch(3)
+
+        // adds users and friendship request to the database to be able to accept a friendship request
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+
+        val friendshipRequestJsonString = mapper.writeValueAsString(friendshipRequest1)
+        val friendshipRequestJson = JsonObject(friendshipRequestJsonString)
+
+        val getFriendshipResponseBeforeUpdate = sendGetRequest("id", user1.id.value, latch, Endpoint.FRIENDSHIP)
+        val putFriendshipResponse = sendPutRequest(friendshipRequestJson, latch, Endpoint.FRIENDSHIP_REQUEST_ACCEPT)
+        val getFriendshipResponseAfterUpdate = sendGetRequest("id", user1.id.value, latch, Endpoint.FRIENDSHIP)
+
+        val getUserFriendshipAfterUpdate = mapper.readValue(getFriendshipResponseAfterUpdate.body(), Array<User>::class.java)
+        val expectedGetUserFriendshipAfterUpdate = arrayOf(user2)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.OK, getFriendshipResponseBeforeUpdate.statusCode()) },
+            { assertEquals(getFriendshipResponseBeforeUpdate.body(), "[]") },
+            { assertEquals(StatusCode.OK, putFriendshipResponse.statusCode()) },
+            { assertEquals(StatusCode.OK, getFriendshipResponseAfterUpdate.statusCode()) },
+            { assertEquals(getUserFriendshipAfterUpdate.size, 1) },
+            { assertEquals(expectedGetUserFriendshipAfterUpdate.first(), getUserFriendshipAfterUpdate.first()) },
+        )
+    }
 }
