@@ -21,8 +21,9 @@ CREATE TABLE friendship (
 CREATE TABLE message
 (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
-    user_to VARCHAR(255) NOT NULL,
-    user_from VARCHAR(255) NOT NULL,
+    sender VARCHAR(255) NOT NULL,
+    receiver VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    FOREIGN KEY (user_to, user_from) REFERENCES friendship(user_to, user_from) ON DELETE CASCADE
+    FOREIGN KEY (sender) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver) REFERENCES user(id) ON DELETE CASCADE
 );
