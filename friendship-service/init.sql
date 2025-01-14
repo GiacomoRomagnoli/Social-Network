@@ -47,3 +47,17 @@ CREATE TABLE message (
     FOREIGN KEY (sender) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver) REFERENCES user(id) ON DELETE CASCADE
 );
+
+DELIMITER $$
+
+CREATE TRIGGER check_sender_and_receiver_are_in_friendship_table
+    BEFORE INSERT ON message
+    FOR EACH ROW
+    BEGIN
+        IF NOT EXISTS (SELECT * FROM friendship WHERE (user1 = LEAST(NEW.sender, NEW.receiver) AND user2 = GREATEST(NEW.sender, NEW.receiver))) THEN
+                SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Sender and receiver are not friends';
+    END IF;
+END $$
+
+DELIMITER ;
