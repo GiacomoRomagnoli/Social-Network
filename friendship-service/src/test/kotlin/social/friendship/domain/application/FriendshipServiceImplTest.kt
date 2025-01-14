@@ -85,10 +85,13 @@ class FriendshipServiceImplTest {
         `when`(friendshipRepository.deleteById(friendship.id)).thenReturn(friendship)
         `when`(friendshipRepository.findAllFriendsOf(user.id)).thenReturn(listOf(user))
 
-    init {
         `when`(friendshipRequestRepository.findById(friendshipRequest.id)).thenReturn(friendshipRequest)
         `when`(friendshipRequestRepository.deleteById(friendshipRequest.id)).thenReturn(friendshipRequest)
         `when`(friendshipRequestRepository.getAllFriendshipRequestsOf(user.id)).thenReturn(listOf(friendshipRequest))
+
+        `when`(messageRepository.findById(message.id)).thenReturn(message)
+        `when`(messageRepository.findAllMessagesReceivedBy(receiver.id)).thenReturn(listOf(message))
+        `when`(messageRepository.findAllMessagesExchangedBetween(sender.id, receiver.id)).thenReturn(listOf(message))
 
         `when`(userRepository.findById(user.id)).thenReturn(user)
 
@@ -214,18 +217,40 @@ class FriendshipServiceImplTest {
 
     @Test
     fun addMessage() {
-        assertDoesNotThrow { messageService.add(message) }
+        assertDoesNotThrow { friendshipService.addMessage(message) }
     }
 
     @Test
     fun getMessage() {
-        val actual = messageService.getById(message.id)
+        val actual = friendshipService.getMessage(message.id)
         assertEquals(message, actual)
     }
 
     @Test
     fun getNonExistentMessage() {
-        val actual = messageService.getById(nonExistingMessage.id)
+        val actual = friendshipService.getMessage(nonExistingMessage.id)
         assertEquals(null, actual)
+    }
+
+    @Test
+    fun receivedMessage() {
+        assertDoesNotThrow { friendshipService.receivedMessage(message) }
+    }
+
+    @Test
+    fun sentMessage() {
+        assertDoesNotThrow { friendshipService.sentMessage(message) }
+    }
+
+    @Test
+    fun getAllMessagesReceivedByUserId() {
+        val actual = friendshipService.getAllMessagesReceivedByUserId(receiver.id)
+        assertEquals(listOf(message), actual)
+    }
+
+    @Test
+    fun getAllMessagesExchangedBetween() {
+        val actual = friendshipService.getAllMessagesExchangedBetween(sender.id, receiver.id)
+        assertEquals(listOf(message), actual)
     }
 }

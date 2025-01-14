@@ -106,12 +106,41 @@ class FriendshipServiceVerticle(val credentials: DatabaseCredentials? = null, sh
         } ?: throw IllegalArgumentException("Friendship request not found")
     }
 
-class FriendshipServiceImpl<I : ID<*>, E : Entity<*>>(private val repository: Repository<I, E>) : FriendshipService<I, E> {
-    override fun add(entity: E) = repository.save(entity)
+    override fun addMessage(message: Message) = messageRepository.save(message)
 
-    override fun getById(id: I): E? = repository.findById(id)
+    override fun receivedMessage(message: Message) {
+        messageRepository.save(message)
+        val event = MessageReceived(
+            message.id.value.toString(),
+            message.sender.id.value,
+            message.receiver.id.value,
+            message.content
+        )
+        kafkaProducer.publishEvent(event)
+        vertx.eventBus().publish(MessageReceived.TOPIC, mapper.writeValueAsString(message))
+    }
 
-    override fun deleteById(id: I): E? = repository.deleteById(id)
+    override fun sentMessage(message: Message) {
+        messageRepository.save(message)
+        val event = MessageSent(
+            message.id.value.toString(),
+            message.sender.id.value,
+            message.receiver.id.value,
+            message.content
+        )
+        kafkaProducer.publishEvent(event)
+        vertx.eventBus().publish(MessageSent.TOPIC, mapper.writeValueAsString(message))
+    }
+
+    override fun getMessage(messageID: MessageID): Message? = messageRepository.findById(messageID)
+
+    override fun deleteMessage(messageID: MessageID): Message? = messageRepository.deleteById(messageID)
+
+    override fun getAllMessages(): Array<Message> = messageRepository.findAll()
+
+    override fun getAllMessagesReceivedByUserId(userID: User.UserID): Iterable<Message> = messageRepository.findAllMessagesReceivedBy(userID)
 
     override fun getAll(): Array<E> = repository.findAll()
+    override fun getAllMessagesExchangedBetween(user1Id: User.UserID, user2Id: User.UserID): Iterable<Message> = messageRepository.findAllMessagesExchangedBetween(user1Id, user2Id)
+
 }
