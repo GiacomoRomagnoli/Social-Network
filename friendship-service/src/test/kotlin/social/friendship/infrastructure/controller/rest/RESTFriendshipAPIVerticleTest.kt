@@ -280,6 +280,27 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         return response
     }
 
+    private fun sendGetRequest(paramName: String, paramValue: String, paramName2: String, paramValue2: String, latch: CountDownLatch, endpoint: String): HttpResponse<String> {
+        val responseLatch = CountDownLatch(1)
+        lateinit var response: HttpResponse<String>
+        webClient.get(endpoint)
+            .addQueryParam(paramName, paramValue)
+            .addQueryParam(paramName2, paramValue2)
+            .putHeader("content-type", "application/json")
+            .`as`(BodyCodec.string())
+            .send { ar ->
+                latch.countDown()
+                if (ar.succeeded()) {
+                    response = ar.result()
+                } else {
+                    throw ar.cause()
+                }
+                responseLatch.countDown()
+            }
+        responseLatch.await()
+        return response
+    }
+
     private fun sendGetRequest(latch: CountDownLatch, endpoint: String): HttpResponse<String> {
         val responseLatch = CountDownLatch(1)
         lateinit var response: HttpResponse<String>
@@ -454,5 +475,65 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
             { assertEquals(StatusCode.OK, response.statusCode()) },
             { assertEquals(actual.size, expected.size) }
         )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getChatWithWrongParameter() {
+        val latch = CountDownLatch(1)
+
+        // adds users, friendship request, friendship and message to the database to be able to get a chat
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+        service.addFriendship(friendship1)
+        listOf(message1, message2, message3).forEach { service.receivedMessage(it) }
+
+        val response = sendGetRequest("wrongParameter", user2.id.value, latch, Endpoint.MESSAGE_CHAT)
+
+        latch.await()
+        assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getChat() {
+        val latch = CountDownLatch(1)
+
+        // adds users, friendship request, friendship and message to the database to be able to get a chat
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+        service.addFriendship(friendship1)
+        listOf(message1, message2, message3).forEach { service.receivedMessage(it) }
+
+        val response = sendGetRequest("user1Id", user1.id.value, "user2Id", user2.id.value, latch, Endpoint.MESSAGE_CHAT)
+
+        val actual = mapper.readValue(response.body(), Array<Message>::class.java)
+        val expected = arrayOf(message1, message2, message3)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.OK, response.statusCode()) },
+            { assertEquals(expected.size, actual.size) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getChatWithoutParameters() {
+        val latch = CountDownLatch(1)
+
+        // adds users, friendship request, friendship and message to the database to be able to get a chat
+        service.addUser(user1)
+        service.addUser(user2)
+        service.addFriendshipRequest(friendshipRequest1)
+        service.addFriendship(friendship1)
+        listOf(message1, message2, message3).forEach { service.receivedMessage(it) }
+
+        val response = sendGetRequest(latch, Endpoint.MESSAGE_CHAT)
+
+        latch.await()
+        assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
     }
 }

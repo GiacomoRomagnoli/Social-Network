@@ -230,4 +230,33 @@ class RESTFriendshipAPIVerticle(private val service: FriendshipService) : Abstra
             }
         }
     }
+
+    private fun getChat(ctx: RoutingContext) {
+        vertx.executeBlocking(
+            Callable {
+                if (ctx.request().params().isEmpty) {
+                    throw IllegalArgumentException("cannot execute get request without parameters")
+                } else {
+                    val user1Id = ctx.request().getParam("user1Id") ?: throw IllegalArgumentException("'user1Id' is required")
+                    val user2Id = ctx.request().getParam("user2Id") ?: throw IllegalArgumentException("'user2Id' is required")
+                    logger.debug("Received GET request: 'user1Id': '{}', 'user2Id': '{}'", user1Id, user2Id)
+
+                    val user1 = User.of(user1Id)
+                    val user2 = User.of(user2Id)
+                    val messagesRetrieved = service.getAllMessagesExchangedBetween(user1.id, user2.id)
+
+                    logger.trace("message retrieved: '{}'", messagesRetrieved)
+                    mapper.writeValueAsString(messagesRetrieved)
+                }
+            }
+        ).onComplete {
+            if (it.succeeded()) {
+                logger.trace("messages retrieved successfully")
+                sendResponse(ctx, StatusCode.OK, it.result().toString())
+            } else {
+                logger.warn("failed to get messages:", it.cause())
+                sendErrorResponse(ctx, it.cause())
+            }
+        }
+    }
 }
