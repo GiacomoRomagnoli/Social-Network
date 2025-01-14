@@ -399,6 +399,27 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
 
     @Timeout(5 * 60)
     @Test
+    fun getFriendshipRequests() {
+        val latch = CountDownLatch(1)
+
+        // adds users and friendship request to the database to be able to get all friendship requests
+        listOf(user1, user2, user3, user4, user5, user6).forEach { service.addUser(it) }
+        listOf(friendshipRequest1, friendshipRequest2, friendshipRequest3).forEach { service.addFriendshipRequest(it) }
+
+        val response = sendGetRequest("id", user1.id.value, latch, Endpoint.FRIENDSHIP_REQUEST)
+
+        val actual = mapper.readValue(response.body(), Array<FriendshipRequest>::class.java)
+        val expected = arrayOf(friendshipRequest1)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.OK, response.statusCode()) },
+            { assertEquals(actual.size, expected.size) }
+        )
+    }
+
+    @Timeout(5 * 60)
+    @Test
     fun getFriendshipsWithWrongParams() {
         val latch = CountDownLatch(1)
 
@@ -411,5 +432,27 @@ object RESTFriendshipAPIVerticleTest : DockerSQLTest() {
 
         latch.await()
         assertEquals(StatusCode.BAD_REQUEST, response.statusCode())
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun getFriendships() {
+        val latch = CountDownLatch(1)
+
+        // adds users, friendship request and friendship to the database to be able to get all friendships
+        listOf(user1, user2, user3, user4, user5, user6).forEach { service.addUser(it) }
+        listOf(friendshipRequest1, friendshipRequest2, friendshipRequest3).forEach { service.addFriendshipRequest(it) }
+        listOf(friendship1, friendship2, friendship3).forEach { service.addFriendship(it) }
+
+        val response = sendGetRequest("id", user1.id.value, latch, Endpoint.FRIENDSHIP)
+
+        val actual = mapper.readValue(response.body(), Array<User>::class.java)
+        val expected = arrayOf(friendship1)
+
+        latch.await()
+        assertAll(
+            { assertEquals(StatusCode.OK, response.statusCode()) },
+            { assertEquals(actual.size, expected.size) }
+        )
     }
 }
