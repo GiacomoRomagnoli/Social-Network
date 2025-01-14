@@ -191,10 +191,7 @@ class RESTFriendshipAPIVerticle(private val service: FriendshipService) : Abstra
                 logger.debug("Received POST request: '{}'", requestBody)
 
                 val message: Message = mapper.readValue(requestBody, Message::class.java)
-                messageService.add(message)
-
-                val messageJsonString = mapper.writeValueAsString(message)
-                producer.write(KafkaProducerRecord.create(FriendshipRequestAccepted.TOPIC, messageJsonString))
+                service.addMessage(message)
             }
         ).onComplete {
             if (it.succeeded()) {
@@ -207,27 +204,20 @@ class RESTFriendshipAPIVerticle(private val service: FriendshipService) : Abstra
         }
     }
 
-    private fun getMessage(ctx: RoutingContext) {
+    private fun getMessagesReceived(ctx: RoutingContext) {
         vertx.executeBlocking(
             Callable {
                 if (ctx.request().params().isEmpty) {
-                    val messagesRetrieved = messageService.getAll()
-                    logger.trace("messages retrieved: '{}'", messagesRetrieved)
-                    mapper.writeValueAsString(messagesRetrieved)
+                    throw IllegalArgumentException("cannot execute get request without parameters")
                 } else {
-                    val requestedUserToID = ctx.request().getParam("to") ?: throw IllegalArgumentException("message 'to' is required, because messages can be exchanged only if a friendship is present")
-                    val requestedUserFromID = ctx.request().getParam("from") ?: throw IllegalArgumentException("message 'from' is required, because messages can be exchanged only if a friendship is present")
-                    val requestedMessageID = ctx.request().getParam("id") ?: throw IllegalArgumentException("message 'id' is required")
-                    logger.debug("Received GET request: 'to': '{}', 'from': '{}', 'id': '{}'", requestedUserToID, requestedUserFromID, requestedMessageID)
+                    val userId = ctx.request().getParam("id") ?: throw IllegalArgumentException("user 'id' is required")
+                    logger.debug("Received GET request: 'id': '{}'", userId)
 
-                    val userTo = User.of(requestedUserToID)
-                    val userFrom = User.of(requestedUserFromID)
-                    val friendship = Friendship.of(userTo, userFrom)
-                    val messageToCheckExistenceOf = Message.of(friendship, requestedMessageID)
+                    val user = User.of(userId)
+                    val messagesRetrieved = service.getAllMessagesReceivedByUserId(user.id)
 
-                    val messageRetrieved = messageService.getById(messageToCheckExistenceOf.id) ?: throw IllegalStateException("message not found")
-                    logger.trace("message retrieved: '{}'", messageRetrieved)
-                    mapper.writeValueAsString(messageRetrieved)
+                    logger.trace("message retrieved: '{}'", messagesRetrieved)
+                    mapper.writeValueAsString(messagesRetrieved)
                 }
             }
         ).onComplete {
