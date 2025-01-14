@@ -22,7 +22,7 @@ interface FriendshipProcessor : Processor {
 interface FriendshipRequestProcessor : Processor {
     fun addFriendshipRequest(friendshipRequest: FriendshipRequest)
     fun getFriendshipRequest(friendshipRequestID: FriendshipRequestID): FriendshipRequest?
-    fun rejectFriendshipRequest(friendshipRequest: FriendshipRequest)
+    fun rejectFriendshipRequest(friendshipRequest: FriendshipRequest): FriendshipRequest?
     fun getAllFriendshipRequests(): Array<FriendshipRequest>
     fun acceptFriendshipRequest(request: FriendshipRequest)
     fun getAllFriendshipRequestsByUserId(userID: UserID): Iterable<FriendshipRequest>
