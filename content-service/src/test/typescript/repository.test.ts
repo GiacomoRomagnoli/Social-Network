@@ -178,4 +178,18 @@ describe("sql-repository module", () => {
        expect(result).toStrictEqual(updatedPost);
    });
 
+   test("get post by author", async () => {
+       const user = userOf("user", "user@email.org");
+       const posts = [postOf(user, "first"), postOf(user, "second")];
+       await connect(userRepository);
+       await connect(postRepository);
+       await userRepository.save(user);
+       await postRepository.save(posts[0]);
+       await postRepository.save(posts[1]);
+       const result = await postRepository.findAllPostsByUserID(user.id);
+       expect(result.length).toBe(2);
+       expect(result[0].equals(posts[0]) || result[0].equals(posts[1])).toBe(true);
+       expect(result[1].equals(posts[0]) || result[1].equals(posts[1])).toBe(true);
+   });
+
 });

@@ -4,7 +4,7 @@ const DELETE_POST_BY_ID = "DELETE FROM post WHERE id = ?"
 const FIND_POST_BY_ID = "SELECT * FROM (post INNER JOIN user ON post.author = user.email) WHERE id = ?";
 const FIND_ALL_POST = "SELECT * FROM (post INNER JOIN user ON post.author = user.email)";
 const UPDATE_POST = "UPDATE post SET author = ?, content = ? WHERE id = ?";
-const FIND_ALL_POST_BY_AUTHOR = "SELECT * FROM post WHERE author = ?";
+const FIND_ALL_POST_BY_AUTHOR = "SELECT * FROM (post INNER JOIN user ON post.author = user.email) WHERE author = ?";
 const GET_FEED = `
     SELECT post.id, post.author, post.content, user.userName
     FROM post
