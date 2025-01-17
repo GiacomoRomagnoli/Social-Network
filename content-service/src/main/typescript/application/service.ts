@@ -18,6 +18,7 @@ export interface ContentService extends Service {
     deletePost(postID: PostID, userID: UserID): Promise<Post | undefined>;
     deleteUser(id: UserID): Promise<User | undefined>;
     deleteFriendship(id: FriendshipID): Promise<Friendship | undefined>;
+    getPostByAuthor(id: UserID): Promise<Post[]>;
     init(): Promise<void>;
 }
 
@@ -87,6 +88,10 @@ export class ContentServiceImpl implements ContentService {
 
     getPost(id: PostID): Promise<Post | undefined> {
         return this.postRepository.findByID(id);
+    }
+
+    getPostByAuthor(id: UserID): Promise<Post[]> {
+        return this.postRepository.findAllPostsByUserID(id);
     }
 
 }

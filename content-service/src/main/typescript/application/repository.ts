@@ -1,4 +1,4 @@
-import {Feed, Friendship, FriendshipID, Pair, Post, User} from "../domain/domain";
+import {Feed, Friendship, FriendshipID, Pair, Post, User, UserID} from "../domain/domain";
 import {social} from "../commons-lib";
 import Entity = social.common.ddd.Entity;
 import ID = social.common.ddd.ID;
@@ -18,7 +18,8 @@ export interface Connectable {
 }
 
 export interface PostRepository extends Repository<string, ID<string>, Post>, Connectable {
-    getFeed(user: User): Promise<Feed>
+    getFeed(user: User): Promise<Feed>;
+    findAllPostsByUserID(id: UserID): Promise<Post[]>;
 }
 
 export interface UserRepository extends Repository<string, ID<string>, User>, Connectable {}

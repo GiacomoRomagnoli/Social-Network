@@ -7,7 +7,7 @@ import {
     friendshipOf,
     Post,
     postFrom,
-    User,
+    User, UserID,
     userOf
 } from "../../../domain/domain";
 import {
@@ -23,12 +23,12 @@ import {
     FIND_ALL_USERS,
     UPDATE_USER,
     DELETE_FRIENDSHIP_BY_ID,
-    FIND_ALL_FRIENDSHIP, DELETE_POST_BY_ID, UPDATE_POST
+    FIND_ALL_FRIENDSHIP, DELETE_POST_BY_ID, UPDATE_POST, FIND_ALL_POST_BY_AUTHOR
 } from "./sql-operations";
 import {FriendshipRepository, PostRepository, UserRepository} from "../../../application/repository";
 import {social} from "../../../commons-lib";
-import ID = social.common.ddd.ID;
 import {SqlErrors} from "./sql-errors";
+import ID = social.common.ddd.ID;
 
 export class SqlPostRepository extends SqlErrors implements PostRepository {
 
@@ -94,6 +94,16 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
             this.throwErrorFor(error);
         }
         return feedOf(user, []);
+    }
+
+    async findAllPostsByUserID(id: UserID): Promise<Post[]> {
+        try {
+            const result = await this.connection!.execute<PostDTO[]>(FIND_ALL_POST_BY_AUTHOR, [id.id]);
+            return this.mapToPost(result[0]);
+        } catch (error) {
+            this.throwErrorFor(error);
+        }
+        return [];
     }
 }
 
