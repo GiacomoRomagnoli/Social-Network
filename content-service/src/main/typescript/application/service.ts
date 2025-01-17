@@ -7,14 +7,15 @@ import {
     UserRepository
 } from "./repository";
 import {Feed, Friendship, FriendshipID, Post, PostID, User, UserID} from "../domain/domain";
+import {UnableToDelete} from "./service-errors";
 
 export interface ContentService extends Service {
     addPost(post: Post): Promise<void>;
     addUser(user: User): Promise<void>;
     addFriendship(friendship: Friendship): Promise<void>;
     getPost(id: PostID): Promise<Post | undefined>;
-    getFeed(user: User, keyword: string | undefined): Promise<Feed>;
-    deletePost(id: PostID): Promise<Post | undefined>;
+    getFeed(userID: UserID, keyword?: string): Promise<Feed>;
+    deletePost(postID: PostID, userID: UserID): Promise<Post | undefined>;
     deleteUser(id: UserID): Promise<User | undefined>;
     deleteFriendship(id: FriendshipID): Promise<Friendship | undefined>;
     init(): Promise<void>;
@@ -59,18 +60,27 @@ export class ContentServiceImpl implements ContentService {
         return this.friendshipRepository.deleteById(id);
     }
 
-    deletePost(id: PostID): Promise<Post | undefined> {
-        return this.postRepository.deleteById(id);
+    async deletePost(postID: PostID, userID: UserID): Promise<Post | undefined> {
+        const post = await this.postRepository.findByID(postID);
+        if(post) {
+            if(userID.equals(post.author.id)){
+                return await this.postRepository.deleteById(postID);
+            } else {
+                throw new UnableToDelete("only authors can delete posts");
+            }
+        }
+        return undefined;
     }
 
     deleteUser(id: UserID): Promise<User | undefined> {
         return this.userRepository.deleteById(id);
     }
 
-    async getFeed(user: User, keyword: string | undefined): Promise<Feed> {
-        const feed = await this.postRepository.getFeed(user);
+    async getFeed(userID: UserID, keyword?: string): Promise<Feed> {
+        const user = await this.userRepository.findByID(userID);
+        const feed = await this.postRepository.getFeed(user!);
         if(keyword) {
-            return feed.filterBy(keyword);
+                return feed.filterBy(keyword);
         }
         return feed;
     }
