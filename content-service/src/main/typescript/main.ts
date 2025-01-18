@@ -12,7 +12,7 @@ const userRepository: UserRepository = new SqlUserRepository();
 const postRepository: PostRepository = new SqlPostRepository();
 const friendshipRepository: FriendshipRepository = new SqlFriendshipRepository();
 const service = new ContentServiceImpl(friendshipRepository, postRepository,userRepository);
-service.init().then(() => {
+service.init(3306).then(() => {
     const server = new Server(8080, DefaultMiddlewares, getRouter(service));
     server.start().then(() => console.log("server up!"));
 });

@@ -24,7 +24,7 @@ describe("api module", () => {
             new SqlPostRepository(),
             new SqlUserRepository()
         );
-        await service.init();
+        await service.init(3306);
         server = new Server(8080, DefaultMiddlewares, getRouter(service));
         return server.start().then(() => console.log("server up"));
     }, 60 * 1000);

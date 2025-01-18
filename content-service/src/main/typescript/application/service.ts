@@ -19,7 +19,7 @@ export interface ContentService extends Service {
     deleteUser(id: UserID): Promise<User | undefined>;
     deleteFriendship(id: FriendshipID): Promise<Friendship | undefined>;
     getPostByAuthor(id: UserID): Promise<Post[]>;
-    init(): Promise<void>;
+    init(port: number): Promise<void>;
 }
 
 export class ContentServiceImpl implements ContentService {
@@ -38,8 +38,8 @@ export class ContentServiceImpl implements ContentService {
         this.userRepository = userRepository;
     }
 
-    async init() {
-        const config = getConfiguration();
+    async init(port: number) {
+        const config = getConfiguration(port);
         await this.friendshipRepository.connect(config);
         await this.postRepository.connect(config);
         await this.userRepository.connect(config);

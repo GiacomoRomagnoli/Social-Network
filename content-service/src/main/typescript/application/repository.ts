@@ -26,9 +26,10 @@ export interface UserRepository extends Repository<string, ID<string>, User>, Co
 
 export interface FriendshipRepository extends Repository<Pair<string, string>, FriendshipID, Friendship>, Connectable {}
 
-export function getConfiguration() : ConnectionOptions {
+export function getConfiguration(port: number) : ConnectionOptions {
     return {
         host: "127.0.0.1",
+        port: port,
         database: "content",
         user: "user",
         password: fs.readFileSync("./db-password.txt", 'utf8'),
