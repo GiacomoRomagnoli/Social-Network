@@ -1,6 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test} from "@jest/globals";
-import{EventEmitter} from "events"
-import {Kafka} from "kafkajs";
+import {Kafka, Producer} from "kafkajs";
 import {social} from "../../../main/typescript/commons-lib";
 import UserCreated = social.common.events.UserCreated;
 import FriendshipRequestAccepted = social.common.events.FriendshipRequestAccepted;
@@ -17,11 +16,18 @@ describe("kafka module", () => {
     const shell = require("shelljs");
     let service: ContentService;
     let userRepository: UserRepository;
+    let producer: Producer;
+    let kafka: Kafka;
+    let consumer: KafkaConsumer;
     shell.cd("src/test/typescript/infrastructure");
 
     beforeEach(async () => {
         const result = shell.exec("docker compose up --wait");
         console.log(result);
+        kafka = new Kafka({
+            clientId: "test",
+            brokers: ["localhost:9092"]
+        });
         userRepository = new SqlUserRepository();
         service = new ContentServiceImpl(
             new SqlFriendshipRepository(),
@@ -29,57 +35,18 @@ describe("kafka module", () => {
             userRepository
         )
         await service.init(3307);
+        producer = kafka.producer();
+        consumer = new KafkaConsumer(kafka, {groupId: "content-service-group"}, service);
     }, 180 * 1000);
 
     afterEach(async () => {
+        await producer.disconnect();
+        await consumer.stop();
         const result = shell.exec("docker compose down -v");
         console.log(result);
     });
 
-    test("receive a user created topic", async () => {
-        const emitter = new EventEmitter()
-
-        const kafka = new Kafka({
-            clientId: "test",
-            brokers: ["localhost:9092"]
-        })
-
-        const kafka2 = new Kafka({
-            clientId: "redundant",
-            brokers: ["localhost:9092"]
-        })
-
-        const consumer = kafka.consumer({groupId: "content-service-group"})
-        const producer = kafka2.producer();
-        const admin = kafka.admin();
-
-        await admin.connect()
-        await admin.createTopics({topics: [{topic: "topic"}, {topic: "topa"}]})
-        await admin.disconnect()
-
-        await producer.connect()
-        await producer.send({topic: "topic", messages: [{value: "message"}]})
-
-        await consumer.connect()
-        await consumer.subscribe({topics: ["topic", "topa"], fromBeginning: true})
-        await consumer.run({
-            eachMessage: async ({topic, message}) => {
-                console.log(topic);
-                console.log(message?.value);
-                emitter.emit("done");
-            }
-        })
-        return new Promise<void>((resolve) => {
-            emitter.once("done", () => resolve())
-        })
-    }, 90 * 1000);
-
     test("content-service consumer", async () => {
-        const kafka = new Kafka({
-            clientId: "test",
-            brokers: ["localhost:9092"]
-        });
-
         const admin = kafka.admin();
         await admin.connect()
         await admin.createTopics({
@@ -90,7 +57,6 @@ describe("kafka module", () => {
         });
         await admin.disconnect();
 
-        const producer = kafka.producer();
         await producer.connect();
         await producer.send({
             topic: UserCreated.Companion.TOPIC,
@@ -101,7 +67,6 @@ describe("kafka module", () => {
             ]
         });
 
-        const consumer = new KafkaConsumer(kafka, {groupId: "content-service-group"}, service);
         await consumer.consume();
 
         await new Promise<void>((resolve) => {
