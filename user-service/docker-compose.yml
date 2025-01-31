@@ -28,7 +28,7 @@ services:
       - app-network
 
   user-service:
-    image: marcofontana17/social-network-user-service:latest
+    image: social-network-user-service:latest
     container_name: user-service
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
