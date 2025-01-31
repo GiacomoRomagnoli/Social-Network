@@ -28,7 +28,7 @@ services:
       - app-network
 
   friendship-service:
-    image: marcofontana17/social-network-friendship-service:latest
+    image: social-network-friendship-service:latest
     container_name: friendship-service
     ports:
       - "8080:8080"
