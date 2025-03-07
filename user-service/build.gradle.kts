@@ -11,6 +11,10 @@ repositories {
 }
 
 dependencies {
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
+    implementation(libs.jjwt.api)
+    implementation(libs.bcrypt)
     implementation(libs.kotlin.stdlib)
     implementation(libs.log4j.api)
     implementation(libs.log4j.core)

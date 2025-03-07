@@ -106,3 +106,12 @@ data class AdminLoggedIn(
         const val TOPIC = "admin-logged-in"
     }
 }
+
+@JsExport
+data class AuthKeyGenerated(
+    val publicKey: String,
+) : UserEvent {
+    companion object {
+        const val TOPIC = "auth-key-generated"
+    }
+}

@@ -13,6 +13,8 @@ junit-version = "5.10.0"
 mysql-version = "8.0.33"
 shadowjar-version = "8.1.1"
 task-tree-version = "4.0.0"
+bcrypt-version = "0.4"
+jjwt = "0.12.6"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -30,6 +32,10 @@ jackson-core = { module = "com.fasterxml.jackson.core:jackson-databind", version
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-version" }
 mysql-connector-java = { module = "mysql:mysql-connector-java", version.ref = "mysql-version" }
+bcrypt = { module = "org.mindrot:jbcrypt", version.ref = "bcrypt-version" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 [bundles]
 kotlin-testing = [ "kotest-junit5-jvm", "kotest-assertions-core-jvm", "mockito-core" ]

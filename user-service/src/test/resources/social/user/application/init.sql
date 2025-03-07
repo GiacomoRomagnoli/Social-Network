@@ -3,3 +3,10 @@ CREATE TABLE user
     email VARCHAR(255) NOT NULL PRIMARY KEY,
     username VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE credentials
+(
+    user_id VARCHAR(255) NOT NULL PRIMARY KEY,
+    password VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(email) ON DELETE CASCADE
+);

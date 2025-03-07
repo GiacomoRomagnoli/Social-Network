@@ -42,9 +42,11 @@ class KafkaUserProducerVerticle : KafkaProducerVerticle, AbstractVerticle() {
      * - UserUpdated
      */
     override fun publishEvent(event: DomainEvent) {
-        when (event) {
-            is UserCreated -> publish(UserCreated.Companion.TOPIC, mapper.writeValueAsString(event))
-            is UserUpdated -> publish(UserUpdated.Companion.TOPIC, mapper.writeValueAsString(event))
+        this.context.runOnContext {
+            when (event) {
+                is UserCreated -> publish(UserCreated.Companion.TOPIC, mapper.writeValueAsString(event))
+                is UserUpdated -> publish(UserUpdated.Companion.TOPIC, mapper.writeValueAsString(event))
+            }
         }
     }
 

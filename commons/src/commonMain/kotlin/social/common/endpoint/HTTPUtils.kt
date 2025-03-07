@@ -14,6 +14,7 @@ object Endpoint {
 
     const val HEALTH = "/health"
     const val USER = USER_USERS_PATH
+    const val LOGIN = "/login"
     const val FRIENDSHIP = "$FRIENDSHIP_FRIENDS_PATH/friendships"
     const val FRIENDSHIP_REQUEST = FRIENDSHIP_REQUESTS_PATH
     const val FRIENDSHIP_REQUEST_SEND = "$FRIENDSHIP_REQUESTS_PATH/send"

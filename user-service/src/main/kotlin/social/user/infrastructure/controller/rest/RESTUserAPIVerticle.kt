@@ -2,6 +2,7 @@ package social.user.infrastructure.controller.rest
 
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Verticle
+import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -26,7 +27,7 @@ interface UserAPIVerticle : Verticle
  * Verticle that exposes a REST API for users
  * @param service the user service
  */
-class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle(), UserAPIVerticle {
+open class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle(), UserAPIVerticle {
     private val logger: Logger = LogManager.getLogger(this::class)
 
     /**
@@ -40,7 +41,7 @@ class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle()
          * @param ctx the routing context
          * @param statusCode the status code
          */
-        private fun sendResponse(ctx: RoutingContext, statusCode: Int) {
+        protected fun sendResponse(ctx: RoutingContext, statusCode: Int) {
             logger.trace("Sending response with status code: {}", statusCode)
             ctx.response()
                 .setStatusCode(statusCode)
@@ -53,7 +54,8 @@ class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle()
          * @param statusCode the status code
          * @param message the message
          */
-        private fun sendResponse(ctx: RoutingContext, statusCode: Int, message: String?) {
+        @JvmStatic
+        protected fun sendResponse(ctx: RoutingContext, statusCode: Int, message: String?) {
             logger.trace("Sending response with status code: {} and message: {}", statusCode, message)
             ctx.response()
                 .setStatusCode(statusCode)
@@ -65,7 +67,8 @@ class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle()
          * @param ctx the routing context
          * @param error the error
          */
-        private fun sendErrorResponse(ctx: RoutingContext, error: Throwable) {
+        @JvmStatic
+        protected fun sendErrorResponse(ctx: RoutingContext, error: Throwable) {
             when (error) {
                 is IllegalArgumentException -> sendResponse(ctx, StatusCode.BAD_REQUEST, error.message)
                 is IllegalStateException -> sendResponse(ctx, StatusCode.NOT_FOUND, error.message)
@@ -83,6 +86,12 @@ class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle()
         val router = Router.router(vertx)
         router.route().handler(BodyHandler.create())
 
+        addEndPoints(router)
+
+        this.vertx.createHttpServer(options()).requestHandler(router).listen(Port.HTTP)
+    }
+
+    protected open fun addEndPoints(router: Router) {
         router.get(Endpoint.HEALTH).handler { ctx ->
             ctx.response().end("OK")
         }
@@ -90,9 +99,9 @@ class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle()
         router.post(Endpoint.USER).handler(::addUser)
         router.get(Endpoint.USER).handler(::getUser)
         router.put(Endpoint.USER).handler(::updateUser)
-
-        this.vertx.createHttpServer().requestHandler(router).listen(Port.HTTP)
     }
+
+    protected open fun options() = HttpServerOptions()
 
     /**
      * Handler to add a user
