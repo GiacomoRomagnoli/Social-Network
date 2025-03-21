@@ -15,6 +15,7 @@ interface UserService : Service {
     fun addUser(user: User)
     fun getUser(userID: UserID): User?
     fun updateUser(user: User)
+    fun deleteUser(userID: UserID): User?
 }
 
 /**
@@ -48,4 +49,6 @@ class UserServiceImpl(private val repository: UserRepository, private val kafkaP
             kafkaProducer.publishEvent(UserUpdated(user.username, user.email))
         }
     }
+
+    override fun deleteUser(userID: UserID) = repository.deleteById(userID)
 }

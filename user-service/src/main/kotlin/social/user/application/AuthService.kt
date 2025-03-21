@@ -9,6 +9,7 @@ import java.util.Base64
 
 interface AuthService : Service {
     fun login(credentials: Credentials): String
+    fun addCredentials(credentials: Credentials): Unit
 }
 
 class AuthServiceImpl(
@@ -36,5 +37,9 @@ class AuthServiceImpl(
                 .compact()
         }
         throw IllegalArgumentException("password does not match")
+    }
+
+    override fun addCredentials(credentials: Credentials) {
+        repository.save(credentials)
     }
 }

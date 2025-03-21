@@ -12,6 +12,9 @@ object Endpoint {
     private const val FRIENDSHIP_REQUESTS_PATH = "$FRIENDSHIP_FRIENDS_PATH/requests"
     private const val FRIENDSHIP_MESSAGES_PATH = "$FRIENDSHIP_FRIENDS_PATH/messages"
 
+    const val CREDENTIALS = "$USER_USERS_PATH/credentials"
+    const val EMAIL_PARAM = "email"
+    const val USER_EMAIL_PARAM = "$USER_USERS_PATH/:$EMAIL_PARAM"
     const val HEALTH = "/health"
     const val USER = USER_USERS_PATH
     const val LOGIN = "/login"
@@ -31,11 +34,14 @@ object Endpoint {
 @JsExport
 object StatusCode {
     const val OK = 200
+    const val NO_CONTENT = 204
     const val CREATED = 201
     const val BAD_REQUEST = 400
+    const val UNAUTHORIZED = 401
     const val FORBIDDEN = 403
     const val NOT_FOUND = 404
     const val INTERNAL_SERVER_ERROR = 500
+    const val SERVICE_UNAVAILABLE = 503
 }
 
 /**

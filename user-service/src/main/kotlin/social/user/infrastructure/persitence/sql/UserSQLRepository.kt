@@ -13,6 +13,7 @@ import java.sql.SQLIntegrityConstraintViolationException
 /**
  * SQL repository for users.
  */
+// TODO: aggiornare le query e il db con i nuovi flag
 class UserSQLRepository : UserRepository {
     private val logger = LogManager.getLogger(UserSQLRepository::class)
     private lateinit var connection: Connection

@@ -27,7 +27,7 @@ interface UserAPIVerticle : Verticle
  * Verticle that exposes a REST API for users
  * @param service the user service
  */
-open class RESTUserAPIVerticle(private val service: UserService) : AbstractVerticle(), UserAPIVerticle {
+open class RESTUserAPIVerticle(protected val service: UserService) : AbstractVerticle(), UserAPIVerticle {
     private val logger: Logger = LogManager.getLogger(this::class)
 
     /**
@@ -41,6 +41,7 @@ open class RESTUserAPIVerticle(private val service: UserService) : AbstractVerti
          * @param ctx the routing context
          * @param statusCode the status code
          */
+        @JvmStatic
         protected fun sendResponse(ctx: RoutingContext, statusCode: Int) {
             logger.trace("Sending response with status code: {}", statusCode)
             ctx.response()
@@ -93,7 +94,7 @@ open class RESTUserAPIVerticle(private val service: UserService) : AbstractVerti
 
     protected open fun addEndPoints(router: Router) {
         router.get(Endpoint.HEALTH).handler { ctx ->
-            ctx.response().end("OK")
+            sendResponse(ctx, StatusCode.OK)
         }
 
         router.post(Endpoint.USER).handler(::addUser)

@@ -10,6 +10,8 @@ import io.vertx.ext.web.client.WebClientOptions
 import io.vertx.ext.web.codec.BodyCodec
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -22,7 +24,7 @@ import social.user.application.CredentialsRepository
 import social.user.application.UserServiceImpl
 import social.user.domain.Credentials
 import social.user.domain.User
-import social.user.infrastructure.controller.rest.HttpsServerVerticle
+import social.user.infrastructure.controller.rest.HttpServerVerticle
 import social.user.infrastructure.persitence.sql.CredentialsSQLRepository
 import social.user.infrastructure.persitence.sql.SQLUtils
 import social.user.infrastructure.persitence.sql.UserSQLRepository
@@ -30,12 +32,12 @@ import social.utils.docker.DockerTest
 import java.io.File
 import java.util.concurrent.CountDownLatch
 
-class HttpsServerVerticleTest : DockerTest() {
+class HttpServerVerticleTest : DockerTest() {
     private val userRepository = UserSQLRepository()
     private val userService = UserServiceImpl(userRepository, mock())
     private lateinit var credentialsRepository: CredentialsRepository
     private lateinit var authService: AuthService
-    private lateinit var server: HttpsServerVerticle
+    private lateinit var server: HttpServerVerticle
     private lateinit var client: WebClient
     private lateinit var dockerComposeFile: File
     private lateinit var vertx: Vertx
@@ -63,7 +65,7 @@ class HttpsServerVerticleTest : DockerTest() {
             )
         )
         authService = AuthServiceImpl(credentialsRepository, mock())
-        server = HttpsServerVerticle(userService, authService)
+        server = HttpServerVerticle(userService, authService)
         vertx = Vertx.vertx()
         deployVerticle(vertx, server)
         client = WebClient.create(
@@ -71,9 +73,6 @@ class HttpsServerVerticleTest : DockerTest() {
             WebClientOptions()
                 .setDefaultPort(8080)
                 .setDefaultHost("localhost")
-                .setSsl(true)
-                .setTrustAll(true)
-                .setVerifyHost(false)
         )
     }
 
@@ -131,5 +130,49 @@ class HttpsServerVerticleTest : DockerTest() {
             .subject
         assertEquals(StatusCode.OK, response.statusCode())
         assertEquals(subject, body.getString("email"))
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun deleteUser() {
+        lateinit var response: HttpResponse<String>
+        val latch = CountDownLatch(1)
+        userRepository.save(User.of("test@gmail.com", "test"))
+        client.delete("${Endpoint.USER}/test@gmail.com")
+            .`as`(BodyCodec.string())
+            .send {
+                latch.countDown()
+                if (it.succeeded()) {
+                    response = it.result()
+                }
+            }
+        latch.await()
+        assertEquals(StatusCode.NO_CONTENT, response.statusCode())
+        assertNull(userRepository.findById(User.userIDOf("test@gmail.com")))
+    }
+
+    @Timeout(5 * 60)
+    @Test
+    fun addCredentialsForExistingUser() {
+        lateinit var response: HttpResponse<String>
+        val latch = CountDownLatch(1)
+        val body = JsonObject()
+            .put("email", "test@gmail.com")
+            .put("password", "1ValidPassword!")
+        userRepository.save(User.of("test@gmail.com", "test"))
+        client.post(Endpoint.CREDENTIALS)
+            .`as`(BodyCodec.string())
+            .sendJsonObject(body) {
+                latch.countDown()
+                if (it.succeeded()) {
+                    response = it.result()
+                }
+            }
+        latch.await()
+        assertEquals(StatusCode.CREATED, response.statusCode())
+        assertTrue(
+            credentialsRepository.findById(User.userIDOf("test@gmail.com"))
+            !!.password.match("1ValidPassword!")
+        )
     }
 }

@@ -1,0 +1,131 @@
+secrets:
+  db_root_password:
+    file: db-root-password.txt
+  db_password:
+    file: db-password.txt
+
+networks:
+  private_network:
+    internal: true
+  public_network:
+    internal: false
+
+volumes:
+  user-sql-data:
+    driver: local
+  kafka-data:
+    driver: local
+
+services:
+  api-gateway:
+    image: api-gateway
+    networks:
+      - private_network
+      - public_network
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-k", "-f", "https://127.0.0.1:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-service:
+    image: user-service
+    ports:
+      - "8081:8080"
+    networks:
+      - private_network
+      - public_network
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: user
+      MYSQL_USER: user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      DB_HOST: user-sql-repository
+      DB_PORT: 3306
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    secrets:
+      - db_root_password
+      - db_password
+    depends_on:
+      user-sql-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://user-service:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-sql-db:
+    image: mysql:latest
+    container_name: user-sql-repository
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: user
+      MYSQL_USER: user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      DB_HOST: user-sql-repository
+      DB_PORT: 3307
+    volumes:
+      - user-sql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "user-sql-db" ]
+      interval: 40s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - db_root_password
+      - db_password
+    networks:
+      - private_network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      user-sql-db:
+        condition: service_healthy
+    networks:
+      - private_network
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka:9092" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - private_network
+    healthcheck:
+      test: [ "CMD", "echo", "ruok", "|", "nc", "zookeeper", "2181", "|", "grep", "imok" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+

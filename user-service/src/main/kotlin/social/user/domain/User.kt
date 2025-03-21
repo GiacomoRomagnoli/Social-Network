@@ -9,6 +9,7 @@ import social.common.ddd.ID
  * @param email the email of the user
  * @param username the username of the user
  */
+// TODO: aggiungere flag blocked e flag admin
 class User private constructor(val email: String, val username: String) : Entity<User.UserID>(UserID(email)) {
     /**
      * Data class to represent the user ID.
