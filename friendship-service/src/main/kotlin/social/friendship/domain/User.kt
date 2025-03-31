@@ -8,11 +8,9 @@ import social.common.ddd.ID
 
 /**
  * Class to represent a user.
- * @param userId the user ID
+ * @param id the user ID
  */
-class User private constructor(
-    @JsonProperty("userId") val userId: UserID
-) : Entity<User.UserID>(userId) {
+class User private constructor(id: UserID) : Entity<User.UserID>(id) {
 
     /**
      * Data class to represent the user ID.
