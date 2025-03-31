@@ -207,6 +207,7 @@ class RESTFriendshipAPIVerticleImpl(private val service: FriendshipService) : Ab
         router.post(Endpoint.MESSAGE_SEND).handler(::addMessage)
         router.get(Endpoint.MESSAGE_RECEIVE).handler(::getMessagesReceived)
         router.get(Endpoint.MESSAGE_CHAT).handler(::getChat)
+        router.get(Endpoint.MESSAGE).handler(::getMessage)
 
         this.vertx.createHttpServer()
             .requestHandler(router)
@@ -456,6 +457,25 @@ class RESTFriendshipAPIVerticleImpl(private val service: FriendshipService) : Ab
                 sendResponse(ctx, StatusCode.OK, it.result().toString())
             } else {
                 logger.warn("failed to get messages:", it.cause())
+                sendErrorResponse(ctx, it.cause())
+            }
+        }
+    }
+
+    private fun getMessage(ctx: RoutingContext) {
+        vertx.executeBlocking(
+            Callable {
+                val uuid = ctx.pathParam(Endpoint.UUID)
+                val message = service.getMessage(Message.MessageID(UUID.fromString(uuid)))
+                    ?: throw IllegalStateException("message not found")
+                mapper.writeValueAsString(message)
+            }
+        ).onComplete {
+            if (it.succeeded()) {
+                logger.trace("message retrieved successfully")
+                sendResponse(ctx, StatusCode.OK, it.result())
+            } else {
+                logger.warn("failed to get message:", it.cause())
                 sendErrorResponse(ctx, it.cause())
             }
         }
