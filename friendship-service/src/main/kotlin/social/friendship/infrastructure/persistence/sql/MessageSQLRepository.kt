@@ -7,6 +7,7 @@ import social.friendship.domain.User
 import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
+import java.sql.Timestamp
 import java.util.UUID
 
 /**
@@ -31,7 +32,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                 UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
                 User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                 User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                result.getString(SQLColumns.MessageTable.CONTENT)
+                result.getString(SQLColumns.MessageTable.CONTENT),
+                result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
             )
         } else {
             null
@@ -49,7 +51,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
             entity.id.value.toString(),
             entity.sender.id.value,
             entity.receiver.id.value,
-            entity.content
+            entity.content,
+            Timestamp.valueOf(entity.timestamp)
         )
         ps.executeUpdate()
     }
@@ -62,10 +65,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
     override fun deleteById(id: MessageID): Message? {
         connection.autoCommit = false
         try {
-            val messageToDelete = findById(id)
-            if (messageToDelete == null) {
-                return null
-            }
+            val messageToDelete = findById(id) ?: return null
 
             val ps: PreparedStatement = SQLUtils.prepareStatement(
                 connection,
@@ -107,7 +107,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                     UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
                     User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                     User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                    result.getString(SQLColumns.MessageTable.CONTENT)
+                    result.getString(SQLColumns.MessageTable.CONTENT),
+                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
                 )
             )
         }
@@ -133,7 +134,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                     UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
                     User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                     User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                    result.getString(SQLColumns.MessageTable.CONTENT)
+                    result.getString(SQLColumns.MessageTable.CONTENT),
+                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
                 )
             )
         }
@@ -166,7 +168,8 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                     UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
                     User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                     User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                    result.getString(SQLColumns.MessageTable.CONTENT)
+                    result.getString(SQLColumns.MessageTable.CONTENT),
+                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
                 )
             )
         }

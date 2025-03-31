@@ -28,6 +28,7 @@ object SQLColumns {
         const val SENDER = "sender"
         const val RECEIVER = "receiver"
         const val CONTENT = "content"
+        const val TIMESTAMP = "timestamp"
     }
 
     /**

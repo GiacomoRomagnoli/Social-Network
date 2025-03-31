@@ -40,12 +40,13 @@ END $$
 DELIMITER ;
 
 CREATE TABLE message (
-                         id VARCHAR(255) NOT NULL PRIMARY KEY,
-                         sender VARCHAR(255) NOT NULL,
-                         receiver VARCHAR(255) NOT NULL,
-                         content TEXT NOT NULL,
-                         FOREIGN KEY (sender) REFERENCES user(id) ON DELETE CASCADE,
-                         FOREIGN KEY (receiver) REFERENCES user(id) ON DELETE CASCADE
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    sender VARCHAR(255) NOT NULL,
+    receiver VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    FOREIGN KEY (sender) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver) REFERENCES user(id) ON DELETE CASCADE
 );
 
 DELIMITER $$

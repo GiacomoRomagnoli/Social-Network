@@ -49,11 +49,13 @@ object SQLOperation {
             """
             SELECT * FROM message
             WHERE receiver = ?
+            ORDER BY timestamp DESC
             """
         const val SELECT_MESSAGES_EXCHANGED_BETWEEN_USERS =
             """
             SELECT * FROM message
             WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
+            ORDER BY timestamp DESC
             """
         const val SELECT_USER_BY_ID =
             """
@@ -104,8 +106,8 @@ object SQLOperation {
             """
         const val INSERT_MESSAGE =
             """
-            INSERT INTO message (id, sender, receiver, content)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO message (id, sender, receiver, content, timestamp)
+            VALUES (?, ?, ?, ?, ?)
             """
         const val DELETE_MESSAGE_BY_ID =
             """

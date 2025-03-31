@@ -130,7 +130,7 @@ class MessageSQLRepositoryTest : DockerSQLTest() {
         val actual = messageRepository.findById(original.id)
         assertAll(
             { assertTrue(actual != null) },
-            { assertTrue(actual?.messageId == updated.messageId) },
+            { assertTrue(actual?.id == updated.id) },
             { assertTrue(actual?.content == updated.content) }
         )
     }
