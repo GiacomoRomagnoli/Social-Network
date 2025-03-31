@@ -1,12 +1,13 @@
 package social.friendship.infrastructure.persistence.sql
 
 import org.apache.logging.log4j.LogManager
+import social.friendship.application.ConnectableRepository
 import java.sql.Connection
 
 /**
  * Abstract class to be extended by SQL repositories that need to connect to a database.
  */
-abstract class AbstractSQLRepository {
+abstract class AbstractSQLRepository : ConnectableRepository {
     protected lateinit var connection: Connection
     private val logger = LogManager.getLogger(this::class)
 
@@ -14,20 +15,20 @@ abstract class AbstractSQLRepository {
      * Connect to a database.
      * @param host the host of the database
      * @param port the port of the database
-     * @param database the name of the database
+     * @param dbName the name of the database
      * @param username the username to connect to the database
      * @param password the password to connect to the database
      */
-    fun connect(host: String, port: String, database: String, username: String, password: String) {
+    override fun connect(host: String, port: String, dbName: String, username: String, password: String) {
         logger.trace(
             "Connecting to database with credentials:\n" +
                 "host={},\n" +
                 "port={},\n" +
                 "database={},\n" +
                 "username={}",
-            host, port, database, username
+            host, port, dbName, username
         )
-        connection = SQLUtils.mySQLConnection(host, port, database, username, password)
+        connection = SQLUtils.mySQLConnection(host, port, dbName, username, password)
     }
 
     /**
