@@ -1,6 +1,24 @@
-version: '3.8'
-
 services:
+  api-gateway:
+    build: ./api-gateway
+    image: api-gateway
+    networks:
+      - private_network
+      - public_network
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-k", "-f", "https://127.0.0.1:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   user-sql-db:
     image: mysql:latest
     container_name: user-sql-repository
@@ -10,14 +28,11 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
       DB_HOST: user-sql-repository
-      DB_PORT: 3307
-    ports:
-      - "3307:3306"
     volumes:
       - user-sql-data:/var/lib/mysql
       - ./user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "user-sql-repository" ]
       interval: 40s
       timeout: 5s
       retries: 5
@@ -25,10 +40,11 @@ services:
       - db_root_password
       - db_password
     networks:
-      - app-network
+      - private_network
 
   user-service:
-    image: marcofontana17/social-network-user-service:latest
+    build: ./user-service
+    image: user-service
     container_name: user-service
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
@@ -39,15 +55,13 @@ services:
       DB_PORT: 3306
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
-    ports:
-      - "8080:8080"
     depends_on:
       user-sql-db:
         condition: service_healthy
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://user-service:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -55,7 +69,7 @@ services:
       - db_root_password
       - db_password
     networks:
-      - app-network
+      - private_network
 
   friendship-sql-repository:
     image: mysql:latest
@@ -66,14 +80,11 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
       DB_HOST: friendship-sql-repository
-      DB_PORT: 3308
-    ports:
-      - "3308:3306"
     volumes:
       - friendship-sql-data:/var/lib/mysql
       - ./friendship-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "friendship-sql-repository" ]
       interval: 40s
       timeout: 5s
       retries: 5
@@ -81,13 +92,12 @@ services:
       - db_root_password
       - db_password
     networks:
-      - app-network
+      - private_network
 
   friendship-service:
-    image: marcofontana17/social-network-friendship-service:latest
+    build: ./friendship-service
+    image: friendship-service
     container_name: friendship-service
-    ports:
-      - "8081:8080"
     depends_on:
       friendship-sql-repository:
         condition: service_healthy
@@ -101,7 +111,7 @@ services:
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      test: [ "CMD", "curl", "-f", "http://friendship-service:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -109,7 +119,7 @@ services:
       - db_root_password
       - db_password
     networks:
-      - app-network
+      - private_network
 
   content-sql-repository:
     image: mysql:latest
@@ -120,14 +130,11 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
       DB_HOST: content-sql-repository
-      DB_PORT: 3306
-    ports:
-      - "3309:3306"
     volumes:
       - content-sql-data:/var/lib/mysql
       - ./content-service/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "content-sql-repository" ]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -135,13 +142,12 @@ services:
       - db_root_password
       - db_password
     networks:
-      - app-network
+      - private_network
 
   content-service:
-    image: marcofontana17/social-network-content-service:latest
+    build: ./content-service
+    image: content-service
     container_name: content-service
-    ports:
-      - "8082:8080"
     depends_on:
       content-sql-repository:
         condition: service_healthy
@@ -155,7 +161,7 @@ services:
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
     healthcheck:
-      test: ["CMD", "true"]
+      test: [ "CMD", "curl", "-f", "http://content-service:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -163,7 +169,7 @@ services:
       - db_root_password
       - db_password
     networks:
-      - app-network
+      - private_network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -171,12 +177,10 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
     networks:
-      - app-network
+      - private_network
     healthcheck:
-      test: [ "CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok" ]
+      test: [ "CMD", "echo", "ruok", "|", "nc", "zookeeper", "2181", "|", "grep", "imok" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -191,9 +195,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
-    ports:
-      - "9092:9092"
     volumes:
       - kafka-data:/var/lib/kafka/data
     depends_on:
@@ -206,9 +207,9 @@ services:
       content-sql-repository:
         condition: service_healthy
     networks:
-      - app-network
+      - private_network
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka:9092" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -230,5 +231,8 @@ volumes:
     driver: local
 
 networks:
-  app-network:
-    driver: bridge
+  private_network:
+    internal: true
+  public_network:
+    internal: false
+
