@@ -11,13 +11,9 @@ object Utils {
     fun forwardResponse(context: RoutingContext): (AsyncResult<HttpResponse<Buffer>>) -> Unit =
         {
             if (it.succeeded()) {
-                context.response()
-                    .setStatusCode(it.result().statusCode())
-                    .end(it.result().body())
+                sendResponse(context, it.result().statusCode(), it.result().body())
             } else {
-                context.response()
-                    .setStatusCode(StatusCode.SERVICE_UNAVAILABLE)
-                    .end()
+                sendServiceUnavailableResponse(context)
             }
         }
 
@@ -28,6 +24,11 @@ object Utils {
         sendResponse(context, StatusCode.SERVICE_UNAVAILABLE, msg)
 
     private fun sendResponse(context: RoutingContext, statusCode: Int, msg: String?): Future<Void> =
+        context.response()
+            .setStatusCode(statusCode)
+            .let { if (msg != null) it.end(msg) else it.end() }
+
+    private fun sendResponse(context: RoutingContext, statusCode: Int, msg: Buffer?): Future<Void> =
         context.response()
             .setStatusCode(statusCode)
             .let { if (msg != null) it.end(msg) else it.end() }

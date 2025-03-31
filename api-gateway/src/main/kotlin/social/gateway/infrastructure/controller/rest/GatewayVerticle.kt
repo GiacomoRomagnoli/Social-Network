@@ -36,6 +36,7 @@ open class GatewayVerticle : AbstractVerticle() {
             logger.trace("GET /health received")
             ctx.response().setStatusCode(StatusCode.OK).end()
         }
+        // User
         router.post(Endpoint.LOGIN)
             .handler(handlerOf(UserHandlers::login, webClient))
         router.post(Endpoint.USER)
@@ -46,6 +47,42 @@ open class GatewayVerticle : AbstractVerticle() {
         router.put(Endpoint.USER)
             .handler(AuthHandlers::jwtAuth)
             .handler(handlerOf(UserHandlers::putUser, webClient))
+        // Friendship
+        router.get(Endpoint.FRIENDSHIP_EMAIL_PARAM)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(FriendshipHandlers::getFriendships, webClient))
+        router.get(Endpoint.FRIENDSHIP_REQUEST_EMAIL_PARAM)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(FriendshipHandlers::getFriendshipRequests, webClient))
+        router.post(Endpoint.FRIENDSHIP_REQUEST_SEND)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(FriendshipHandlers::postFriendshipRequest, webClient))
+        router.put(Endpoint.FRIENDSHIP_REQUEST_ACCEPT)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(FriendshipHandlers::acceptFriendshipRequest, webClient))
+        router.put(Endpoint.FRIENDSHIP_REQUEST_DECLINE)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(FriendshipHandlers::declineFriendshipRequest, webClient))
+        // Messages
+        router.post(Endpoint.MESSAGE_SEND)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(MessageHandlers::sendMessage, webClient))
+        router.get(Endpoint.MESSAGE_CHAT_PARAMS)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(MessageHandlers::getChat, webClient))
+        router.get(Endpoint.MESSAGE)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(MessageHandlers::getMessage, webClient))
+        // Contents
+        router.post(Endpoint.POST)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(ContentHandlers::publishPost, webClient))
+        router.get(Endpoint.FEED)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(ContentHandlers::getFeed, webClient))
+        router.get(Endpoint.POST_EMAIL_PARAM)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(handlerOf(ContentHandlers::getPosts, webClient))
     }
 
     protected open fun options(): HttpServerOptions {
