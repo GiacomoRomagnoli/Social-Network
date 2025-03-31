@@ -2,7 +2,6 @@ package social.gateway.infrastructure.controller.rest
 
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.client.WebClient
-import org.apache.logging.log4j.LogManager
 import social.common.endpoint.Endpoint
 import social.common.endpoint.Port
 import social.gateway.infrastructure.controller.rest.Utils.forwardResponse
@@ -10,7 +9,6 @@ import social.gateway.infrastructure.controller.rest.Utils.sendUnauthorizedRespo
 
 object FriendshipHandlers {
     private const val FRIENDSHIP_SERVICE = "friendship-service"
-    private val logger = LogManager.getLogger(this::class.java)
 
     fun getFriendships(context: RoutingContext, webClient: WebClient) {
         val email = context.pathParam(Endpoint.EMAIL_PARAM)
