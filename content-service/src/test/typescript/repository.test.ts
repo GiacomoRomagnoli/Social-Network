@@ -167,7 +167,7 @@ describe("sql-repository module", () => {
        const user1 = userOf("example1", "example1@email.com");
        const user2 = userOf("example2", "example2@email.com");
        const post = postOf(user1, "this will be updated");
-       const updatedPost = postOf(user2, "this is updated", post.id.id);
+       const updatedPost = postOf(user2, "this is updated", post.id.value);
        await connect(userRepository);
        await connect(postRepository);
        await userRepository.save(user1);

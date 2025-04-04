@@ -14,7 +14,7 @@ class User private constructor(val email: String, val username: String) : Entity
     /**
      * Data class to represent the user ID.
      */
-    data class UserID(val value: String) : ID<String>(value)
+    class UserID(value: String) : ID<String>(value)
 
     /**
      * Factory companion object to create a user.

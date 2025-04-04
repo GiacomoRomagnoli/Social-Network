@@ -47,7 +47,7 @@ describe("api module", () => {
             body: JSON.stringify({
                 user: {
                     name: user.userName,
-                    email: user.email,
+                    email: user.id.value,
                 },
                 content: content,
             }),
@@ -70,7 +70,7 @@ describe("api module", () => {
             },
             body: JSON.stringify({
                 name: user.userName,
-                email: user.email,
+                email: user.id.value,
                 content: content,
             }),
         });
@@ -114,13 +114,13 @@ describe("api module", () => {
         const result = await response.json();
         expect(response.status).toBe(StatusCode.OK);
         expect(result.length).toBe(2);
-        expect(result[0].id === post1.id.id || result[0].id === post2.id.id).toBe(true);
+        expect(result[0].id === post1.id.value || result[0].id === post2.id.value).toBe(true);
         expect(result[0].author.name).toBe(user1.userName);
-        expect(result[0].author.email).toBe(user1.email);
+        expect(result[0].author.email).toBe(user1.id.value);
         expect(result[0].content).toBe(content);
-        expect(result[1].id === post1.id.id || result[1].id === post2.id.id).toBe(true);
+        expect(result[1].id === post1.id.value || result[1].id === post2.id.value).toBe(true);
         expect(result[1].author.name).toBe(user1.userName);
-        expect(result[1].author.email).toBe(user1.email);
+        expect(result[1].author.email).toBe(user1.id.value);
         expect(result[1].content).toBe(content);
     });
 
@@ -129,17 +129,17 @@ describe("api module", () => {
         const post = postOf(user, "to be deleted");
         await service.addUser(user);
         await service.addPost(post);
-        const response = await fetch(`http://localhost:8080/contents/posts/${user.email}/${post.id.id}`, {
+        const response = await fetch(`http://localhost:8080/contents/posts/${user.id.value}/${post.id.value}`, {
             method: "DELETE",
         });
         const body = await response.json();
         const result = await service.getPost(post.id)
         expect(response.status).toBe(StatusCode.OK);
         expect(body).toMatchObject({
-            id: post.id.id,
+            id: post.id.value,
             author: {
                 name: user.userName,
-                email: user.email,
+                email: user.id.value,
             },
             content: post.content,
         });
@@ -151,7 +151,7 @@ describe("api module", () => {
         const post = postOf(user, "to be deleted");
         await service.addUser(user);
         await service.addPost(post);
-        const response = await fetch(`http://localhost:8080/contents/posts/bob@example.com/${post.id.id}`, {
+        const response = await fetch(`http://localhost:8080/contents/posts/bob@example.com/${post.id.value}`, {
             method: "DELETE",
         });
         const result = await service.getPost(post.id)
@@ -172,17 +172,17 @@ describe("api module", () => {
         await service.addPost(alicePost);
         await service.addFriendship(friendshipOf(john, bob));
         await service.addFriendship(friendshipOf(john, alice));
-        const response = await fetch(`http://localhost:8080/contents/posts/feed/${john.email}`);
+        const response = await fetch(`http://localhost:8080/contents/posts/feed/${john.id.value}`);
         const result = await response.json();
         expect(response.status).toBe(StatusCode.OK);
         expect(result.posts.length).toBe(2);
         expect(result.owner).toMatchObject({
             name: john.userName,
-            email: john.email,
+            email: john.id.value,
         });
-        expect(result.posts[0].id === alicePost.id.id || result.posts[0].id === bobPost.id.id).toBe(true);
+        expect(result.posts[0].id === alicePost.id.value || result.posts[0].id === bobPost.id.value).toBe(true);
         expect(result.posts[0].content === alicePost.content || result.posts[0].content === bobPost.content).toBe(true);
-        expect(result.posts[1].id === alicePost.id.id || result.posts[1].id === bobPost.id.id).toBe(true);
+        expect(result.posts[1].id === alicePost.id.value || result.posts[1].id === bobPost.id.value).toBe(true);
         expect(result.posts[1].content === alicePost.content || result.posts[1].content === bobPost.content).toBe(true);
     });
 
@@ -199,15 +199,15 @@ describe("api module", () => {
         await service.addPost(alicePost);
         await service.addFriendship(friendshipOf(john, bob));
         await service.addFriendship(friendshipOf(john, alice));
-        const response = await fetch(`http://localhost:8080/contents/posts/feed/${john.email}?keyword=bob`);
+        const response = await fetch(`http://localhost:8080/contents/posts/feed/${john.id.value}?keyword=bob`);
         const result = await response.json();
         expect(response.status).toBe(StatusCode.OK);
         expect(result.posts.length).toBe(1);
         expect(result.posts[0]).toMatchObject({
-            id: bobPost.id.id,
+            id: bobPost.id.value,
             author: {
                 name: bob.userName,
-                email: bob.email,
+                email: bob.id.value,
             },
             content: bobPost.content,
         });

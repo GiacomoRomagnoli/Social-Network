@@ -10,7 +10,7 @@ describe("domain module", () => {
     test("userOf creates a User", () => {
         const user = userOf(username, email) ;
         expect(user.userName).toBe(username);
-        expect(user.email).toBe(email)
+        expect(user.id.value).toBe(email)
     });
 
     test("postOf creates a Post", () => {

@@ -8,17 +8,14 @@ export class UserID extends ID<string> {}
 
 export interface User extends Entity<UserID> {
     readonly userName: string;
-    readonly email: string;
 }
 
 class UserImpl extends Entity<UserID> implements User {
     readonly userName: string;
-    readonly email: string;
 
     constructor(userName: string, email: string) {
         super(new UserID(email));
         this.userName = userName;
-        this.email = email;
     }
 }
 
@@ -59,7 +56,7 @@ class FeedImpl extends AggregateRoot<FeedID> implements Feed {
     readonly owner: User;
 
     constructor(owner: User, posts: Post[]) {
-        super(new FeedID(owner.email));
+        super(new FeedID(owner.id.value));
         this.owner = owner;
         this.posts = posts;
     }
@@ -101,7 +98,7 @@ class FriendshipImpl extends Entity<FriendshipID> implements Friendship {
     readonly user2: User;
 
     constructor(user1: User, user2: User) {
-        super(new FriendshipID(user1.email, user2.email));
+        super(new FriendshipID(user1.id.value, user2.id.value));
         this.user1 = user1;
         this.user2 = user2;
     }

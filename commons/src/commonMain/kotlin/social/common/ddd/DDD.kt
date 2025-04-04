@@ -11,19 +11,19 @@ expect interface Service
  * class to identify an object as ID
  */
 @JsExport
-open class ID<I> (open val id: I) : ValueObject {
+open class ID<I> (open val value: I) : ValueObject {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ID<*>) return false
-        return id == other.id
+        return value == other.value
     }
 
     override fun hashCode(): Int {
-        return id.hashCode()
+        return value.hashCode()
     }
 
     override fun toString(): String {
-        return id.toString()
+        return value.toString()
     }
 }
 

@@ -86,13 +86,13 @@ function isPost(obj: any): boolean {
 function userToJson(user: User) {
     return {
         name: user.userName,
-        email: user.email,
+        email: user.id.value,
     }
 }
 
 function postToJson(post: Post) {
     return {
-        id: post.id.id,
+        id: post.id.value,
         author: userToJson(post.author),
         content: post.content,
     }

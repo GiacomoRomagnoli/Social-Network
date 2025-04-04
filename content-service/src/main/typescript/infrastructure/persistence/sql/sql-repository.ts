@@ -38,7 +38,7 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
 
     async save(post: Post) {
         try {
-            await this.connection!.execute<ResultSetHeader>(INSERT_POST, [post.author.email, post.content, post.id.id]);
+            await this.connection!.execute<ResultSetHeader>(INSERT_POST, [post.author.id.value, post.content, post.id.value]);
         } catch (error) {
             this.throwErrorFor(error);
         }
@@ -46,7 +46,7 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
 
     async findByID(id: ID<string>): Promise<Post | undefined>{
         try {
-            const result = await this.connection!.execute<PostDTO[]>(FIND_POST_BY_ID, [id.id]);
+            const result = await this.connection!.execute<PostDTO[]>(FIND_POST_BY_ID, [id.value]);
             const posts = this.mapToPost(result[0])
             return posts.length === 1 ? posts[0] : undefined
         } catch (error) {
@@ -59,7 +59,7 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
             await this.connection!.beginTransaction();
             const post = await this.findByID(id);
             if(post){
-                await this.connection!.execute(DELETE_POST_BY_ID, [id.id]);
+                await this.connection!.execute(DELETE_POST_BY_ID, [id.value]);
             }
             await this.connection!.commit();
             return post;
@@ -80,7 +80,7 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
 
     async update(post: Post): Promise<void> {
         try {
-            await this.connection!.execute(UPDATE_POST, [post.author.email, post.content, post.id.id]);
+            await this.connection!.execute(UPDATE_POST, [post.author.id.value, post.content, post.id.value]);
         } catch (error) {
             this.throwErrorFor(error);
         }
@@ -88,7 +88,7 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
 
     async getFeed(user: User): Promise<Feed> {
         try {
-            const result = await this.connection!.execute<PostDTO[]>(GET_FEED, [user.email, user.email]);
+            const result = await this.connection!.execute<PostDTO[]>(GET_FEED, [user.id.value, user.id.value]);
             return feedOf(user, this.mapToPost(result[0]));
         } catch (error) {
             this.throwErrorFor(error);
@@ -98,7 +98,7 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
 
     async findAllPostsByUserID(id: UserID): Promise<Post[]> {
         try {
-            const result = await this.connection!.execute<PostDTO[]>(FIND_ALL_POST_BY_AUTHOR, [id.id]);
+            const result = await this.connection!.execute<PostDTO[]>(FIND_ALL_POST_BY_AUTHOR, [id.value]);
             return this.mapToPost(result[0]);
         } catch (error) {
             this.throwErrorFor(error);
@@ -115,7 +115,7 @@ export class SqlUserRepository extends SqlErrors implements UserRepository {
 
     async save(user: User) {
         try {
-            await this.connection!.execute<ResultSetHeader>(INSERT_USER, [user.userName, user.email]);
+            await this.connection!.execute<ResultSetHeader>(INSERT_USER, [user.userName, user.id.value]);
         } catch (error) {
             this.throwErrorFor(error);
         }
@@ -123,7 +123,7 @@ export class SqlUserRepository extends SqlErrors implements UserRepository {
 
     async findByID(id: ID<string>): Promise<User | undefined> {
         try {
-            const result = await this.connection!.execute<UserDTO[]>(FIND_USER_BY_ID, [id.id]);
+            const result = await this.connection!.execute<UserDTO[]>(FIND_USER_BY_ID, [id.value]);
             const users = this.mapToUser(result[0]);
             return users.length === 1 ? users[0] : undefined;
         } catch (error) {
@@ -136,7 +136,7 @@ export class SqlUserRepository extends SqlErrors implements UserRepository {
             await this.connection!.beginTransaction();
             const user = await this.findByID(id);
             if(user){
-                await this.connection!.execute(DELETE_USER_BY_ID, [id.id]);
+                await this.connection!.execute(DELETE_USER_BY_ID, [id.value]);
             }
             await this.connection!.commit();
             return user;
@@ -157,7 +157,7 @@ export class SqlUserRepository extends SqlErrors implements UserRepository {
 
     async update(user: User): Promise<void> {
         try {
-            await this.connection!.execute(UPDATE_USER, [user.userName, user.email]);
+            await this.connection!.execute(UPDATE_USER, [user.userName, user.id.value]);
         } catch (error) {
             this.throwErrorFor(error);
         }
@@ -207,7 +207,7 @@ export class SqlFriendshipRepository extends SqlErrors implements FriendshipRepo
 
     async save(friendship: Friendship): Promise<void> {
         try {
-            await this.connection?.execute<ResultSetHeader>(INSERT_FRIENDSHIP, [friendship.user1.email, friendship.user2.email]);
+            await this.connection?.execute<ResultSetHeader>(INSERT_FRIENDSHIP, [friendship.user1.id.value, friendship.user2.id.value]);
         } catch (error: any) {
             this.throwErrorFor(error);
         }
