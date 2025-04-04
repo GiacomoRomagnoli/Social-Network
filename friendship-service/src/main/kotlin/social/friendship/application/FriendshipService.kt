@@ -1,9 +1,5 @@
 package social.friendship.application
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.vertx.core.AbstractVerticle
 import org.apache.logging.log4j.LogManager
 import social.common.ddd.Service
 import social.common.events.FriendshipRemoved
@@ -11,7 +7,6 @@ import social.common.events.FriendshipRequestAccepted
 import social.common.events.FriendshipRequestRejected
 import social.common.events.MessageReceived
 import social.common.events.MessageSent
-import social.common.events.UserCreated
 import social.friendship.domain.Friendship
 import social.friendship.domain.Friendship.FriendshipID
 import social.friendship.domain.FriendshipRequest
@@ -36,7 +31,7 @@ interface FriendshipService : FriendshipProcessor, FriendshipRequestProcessor, M
  * @param credentials The database credentials to connect to the MySQL database.
  * @param shouldConnectToDB A flag to determine if the service should connect to the database, used for testing purposes.
  */
-class FriendshipServiceVerticle(
+class FriendshipServiceImpl(
     private val userRepository: UserRepository,
     private val friendshipRepository: FriendshipRepository,
     private val friendshipRequestRepository: FriendshipRequestRepository,
@@ -44,11 +39,8 @@ class FriendshipServiceVerticle(
     private val kafkaProducer: KafkaProducerVerticle,
     private val credentials: DatabaseCredentials? = null,
     shouldConnectToDB: Boolean? = true,
-) : FriendshipService, AbstractVerticle() {
+) : FriendshipService {
     private val logger = LogManager.getLogger(this::class)
-    private val mapper: ObjectMapper = jacksonObjectMapper().apply {
-        registerModule(KotlinModule.Builder().build())
-    }
 
     init {
         if (shouldConnectToDB == true) connectToDatabase()
@@ -102,19 +94,6 @@ class FriendshipServiceVerticle(
     }
 
     /**
-     * Deploys the KafkaFriendshipProducerVerticle to publish events to the Kafka broker.
-     */
-    override fun start() {
-        vertx.deployVerticle(kafkaProducer).onComplete { result ->
-            if (result.succeeded()) {
-                logger.trace("Kafka producer verticle deployed")
-            } else {
-                logger.error("Failed to deploy Kafka producer verticle")
-            }
-        }
-    }
-
-    /**
      * Stops the FriendshipServiceVerticle and closes the database connections.
      */
     override fun addFriendship(friendship: Friendship) = friendshipRepository.save(friendship)
@@ -132,11 +111,10 @@ class FriendshipServiceVerticle(
      * @param friendshipID The ID of the friendship to delete.
      * @return The deleted friendship, or null if it does not exist.
      */
-    override fun deleteFriendship(friendshipID: FriendshipID): Friendship? {
+    override fun deleteFriendship(friendshipID: FriendshipID): Friendship {
         return friendshipRepository.deleteById(friendshipID)?.also {
             val event = FriendshipRemoved(it.user1.id.value, it.user2.id.value)
             kafkaProducer.publishEvent(event)
-            vertx.eventBus().publish(FriendshipRemoved.TOPIC, mapper.writeValueAsString(it))
         } ?: throw IllegalArgumentException("Friendship not found")
     }
 
@@ -172,11 +150,10 @@ class FriendshipServiceVerticle(
      * @param friendshipRequest The friendship request to reject.
      * @return The rejected friendship request, or null if it does not exist.
      */
-    override fun rejectFriendshipRequest(friendshipRequest: FriendshipRequest): FriendshipRequest? {
+    override fun rejectFriendshipRequest(friendshipRequest: FriendshipRequest): FriendshipRequest {
         return friendshipRequestRepository.deleteById(friendshipRequest.id)?.also {
             val event = FriendshipRequestRejected(it.to.id.value, it.from.id.value)
             kafkaProducer.publishEvent(event)
-            vertx.eventBus().publish(FriendshipRequestRejected.TOPIC, mapper.writeValueAsString(it))
         } ?: throw IllegalArgumentException("Friendship request not found")
     }
 
@@ -203,7 +180,6 @@ class FriendshipServiceVerticle(
             friendshipRepository.save(Friendship.of(request))
             val event = FriendshipRequestAccepted(request.to.id.value, request.from.id.value)
             kafkaProducer.publishEvent(event)
-            vertx.eventBus().publish(FriendshipRequestAccepted.TOPIC, mapper.writeValueAsString(it))
         } ?: throw IllegalArgumentException("Friendship request not found")
     }
 
@@ -226,7 +202,6 @@ class FriendshipServiceVerticle(
             message.content
         )
         kafkaProducer.publishEvent(event)
-        vertx.eventBus().publish(MessageReceived.TOPIC, mapper.writeValueAsString(message))
     }
 
     /**
@@ -242,7 +217,6 @@ class FriendshipServiceVerticle(
             message.content
         )
         kafkaProducer.publishEvent(event)
-        vertx.eventBus().publish(MessageSent.TOPIC, mapper.writeValueAsString(message))
     }
 
     /**
@@ -286,7 +260,6 @@ class FriendshipServiceVerticle(
      */
     override fun addUser(user: User) {
         userRepository.save(user)
-        vertx.eventBus().publish(UserCreated.TOPIC, mapper.writeValueAsString(User.of(user.id)))
     }
 
     /**

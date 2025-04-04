@@ -1,8 +1,7 @@
 package social.friendship
 
-import io.vertx.core.Verticle
 import io.vertx.core.Vertx
-import social.friendship.application.FriendshipServiceVerticle
+import social.friendship.application.FriendshipServiceImpl
 import social.friendship.infrastructure.controller.event.KafkaFriendshipConsumerVerticle
 import social.friendship.infrastructure.controller.event.KafkaFriendshipProducerVerticle
 import social.friendship.infrastructure.controller.rest.RESTFriendshipAPIVerticleImpl
@@ -18,25 +17,19 @@ fun main(args: Array<String>) {
     val friendshipRepository = FriendshipSQLRepository()
     val friendshipRequestRepository = FriendshipRequestSQLRepository()
     val messageRepository = MessageSQLRepository()
-    val kafkaProducer = KafkaFriendshipProducerVerticle()
-
-    val service = FriendshipServiceVerticle(
+    val producer = KafkaFriendshipProducerVerticle()
+    val service = FriendshipServiceImpl(
         userRepository,
         friendshipRepository,
         friendshipRequestRepository,
         messageRepository,
-        kafkaProducer,
+        producer,
     )
-
     val api = RESTFriendshipAPIVerticleImpl(service)
-    val producer = KafkaFriendshipProducerVerticle()
     val consumer = KafkaFriendshipConsumerVerticle(service)
-
-    deployVerticles(vertx, api, consumer, producer, service)
-}
-
-private fun deployVerticles(vertx: Vertx, vararg verticles: Verticle) {
-    verticles.forEach {
-        vertx.deployVerticle(it)
+    vertx.deployVerticle(producer).onSuccess {
+        vertx.deployVerticle(consumer).onSuccess {
+            vertx.deployVerticle(api)
+        }
     }
 }

@@ -1,8 +1,5 @@
 package social.friendship.infrastructure.controller.event
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Verticle
 import io.vertx.kafka.client.consumer.KafkaConsumer
@@ -11,6 +8,7 @@ import org.apache.logging.log4j.LogManager
 import social.common.events.UserCreated
 import social.friendship.application.FriendshipService
 import social.friendship.domain.User
+import social.friendship.social.friendship.infrastructure.serialization.jackson.Mapper
 import java.util.concurrent.Callable
 
 /**
@@ -31,9 +29,6 @@ class KafkaFriendshipConsumerVerticle(private val service: FriendshipService) : 
         "group.id" to "friendship-service",
         "auto.offset.reset" to "earliest"
     )
-    private val mapper: ObjectMapper = jacksonObjectMapper().apply {
-        registerModule(KotlinModule.Builder().build())
-    }
     private val events: MutableSet<String> = mutableSetOf(
         UserCreated.TOPIC,
     )
@@ -79,9 +74,9 @@ class KafkaFriendshipConsumerVerticle(private val service: FriendshipService) : 
      * @param record the Kafka record
      */
     private fun userCreatedHandler(record: KafkaConsumerRecord<String, String>) {
-        vertx.executeBlocking(
+        this.context.executeBlocking(
             Callable {
-                val userCreatedEventData = mapper.readValue(record.value(), UserCreated::class.java)
+                val userCreatedEventData = Mapper.readValue(record.value(), UserCreated::class.java)
                 val user = User.of(userCreatedEventData.email)
                 service.addUser(user)
             }
