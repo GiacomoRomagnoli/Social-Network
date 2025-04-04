@@ -14,9 +14,7 @@ object MessageHandlers {
 
     fun sendMessage(context: RoutingContext, webClient: WebClient) {
         val body = context.body().asJsonObject()
-        val email = body.getJsonObject("sender")
-            .getJsonObject("userId")
-            .getString("value")
+        val email = body.getString("sender")
         if (email == context.get(AuthHandlers.USER_ID)) {
             webClient
                 .post(Port.HTTP, MESSAGE_SERVICE, Endpoint.MESSAGE_SEND)
@@ -53,10 +51,10 @@ object MessageHandlers {
                 if (it.succeeded()) {
                     val body = it.result().bodyAsJsonObject()
                     val sender = body.getJsonObject("sender")
-                        .getJsonObject("userId")
+                        .getJsonObject("id")
                         .getString("value")
                     val receiver = body.getJsonObject("receiver")
-                        .getJsonObject("userId")
+                        .getJsonObject("id")
                         .getString("value")
                     if (user == receiver || user == sender) {
                         context.response()

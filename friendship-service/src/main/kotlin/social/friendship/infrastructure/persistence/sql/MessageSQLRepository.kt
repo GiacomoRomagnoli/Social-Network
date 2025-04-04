@@ -33,7 +33,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                 User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                 User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
                 result.getString(SQLColumns.MessageTable.CONTENT),
-                result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
+                result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
             )
         } else {
             null
@@ -52,7 +52,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
             entity.sender.id.value,
             entity.receiver.id.value,
             entity.content,
-            Timestamp.valueOf(entity.timestamp)
+            Timestamp.from(entity.timestamp)
         )
         ps.executeUpdate()
     }
@@ -108,7 +108,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                     User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                     User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
                     result.getString(SQLColumns.MessageTable.CONTENT),
-                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
+                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
                 )
             )
         }
@@ -135,7 +135,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                     User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                     User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
                     result.getString(SQLColumns.MessageTable.CONTENT),
-                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
+                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
                 )
             )
         }
@@ -169,7 +169,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
                     User.of(result.getString(SQLColumns.MessageTable.SENDER)),
                     User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
                     result.getString(SQLColumns.MessageTable.CONTENT),
-                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toLocalDateTime()
+                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
                 )
             )
         }

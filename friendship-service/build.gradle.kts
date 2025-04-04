@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.vertx.kafka.client)
     implementation(libs.jackson.core)
     implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.data.type)
     implementation(libs.mysql.connector.java)
     implementation(project(":commons"))
     implementation(project(":utils"))

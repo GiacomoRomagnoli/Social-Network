@@ -44,7 +44,7 @@ CREATE TABLE message (
     sender VARCHAR(255) NOT NULL,
     receiver VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    timestamp TIMESTAMP NOT NULL,
+    timestamp TIMESTAMP(3) NOT NULL,
     FOREIGN KEY (sender) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver) REFERENCES user(id) ON DELETE CASCADE
 );
