@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import social.common.endpoint.Endpoint
 import social.common.endpoint.StatusCode
-import social.friendship.application.FriendshipServiceVerticle
+import social.friendship.application.FriendshipServiceImpl
 import social.friendship.domain.Friendship
 import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.Message
@@ -60,7 +60,7 @@ class RESTFriendshipAPIVerticleTest : DockerSQLTest() {
     private lateinit var webClient: WebClient
     private lateinit var dockerComposeFile: File
     private lateinit var api: RESTFriendshipAPIVerticleImpl
-    private lateinit var service: FriendshipServiceVerticle
+    private lateinit var service: FriendshipServiceImpl
     private lateinit var vertx: Vertx
 
     @BeforeEach
@@ -70,7 +70,7 @@ class RESTFriendshipAPIVerticleTest : DockerSQLTest() {
         executeDockerComposeCmd(dockerComposeFile, "up", "--wait")
 
         vertx = Vertx.vertx()
-        service = FriendshipServiceVerticle(
+        service = FriendshipServiceImpl(
             userRepository,
             friendshipRepository,
             friendshipRequestRepository,
@@ -78,7 +78,6 @@ class RESTFriendshipAPIVerticleTest : DockerSQLTest() {
             kafkaProducer,
             DatabaseCredentialsImpl(localhostIP, port, database, user, password),
         )
-        deployVerticle(vertx, service)
         api = RESTFriendshipAPIVerticleImpl(service)
         deployVerticle(vertx, api)
         createTestWebClient(vertx)
