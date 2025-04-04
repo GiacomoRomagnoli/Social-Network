@@ -31,6 +31,14 @@ class Simulations : DockerTest() {
     private val friendship = JsonObject()
         .put("to", alice.getString("email"))
         .put("from", bob.getString("email"))
+    private val message1 = JsonObject()
+        .put("sender", bob.getString("email"))
+        .put("receiver", alice.getString("email"))
+        .put("content", "Hi, Alice!")
+    private val message2 = JsonObject()
+        .put("sender", bob.getString("email"))
+        .put("receiver", alice.getString("email"))
+        .put("content", "How are you doing?")
     private val dockerComposePath = "docker-compose.yml"
     private lateinit var dockerComposeFile: File
     private lateinit var client: WebClient
@@ -70,22 +78,77 @@ class Simulations : DockerTest() {
         return response.body()
     }
 
+    private fun <T> eventually(timeoutMillis: Long = 2000, pollInterval: Long = 100, block: () -> T?): T {
+        val startTime = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+            val result = block()
+            if (result != null) return result
+            Thread.sleep(pollInterval)
+        }
+        throw AssertionError("Condition not met within $timeoutMillis ms")
+    }
+
     @Test
     @Timeout(5 * 60)
     fun `bob sends to alice a friend request and she accepts`() {
         val bobToken = login(bob)
-        val friendshipRequestSent = post(client, Endpoint.FRIENDSHIP_REQUEST_SEND, friendship, bobToken)
         val aliceToken = login(alice)
-        val friendshipAccepted = put(client, Endpoint.FRIENDSHIP_REQUEST_ACCEPT, friendship, aliceToken)
-        val friendshipCreated = get(client, "${Endpoint.FRIENDSHIP}/${bob.getString("email")}", bobToken)
-        val bobFriends = JsonArray(friendshipCreated.body())
+
+        val friendshipRequestSent = eventually {
+            val req = post(client, Endpoint.FRIENDSHIP_REQUEST_SEND, friendship, bobToken)
+            if (req.statusCode() == StatusCode.FORBIDDEN) null else req
+        }
         assertEquals(StatusCode.CREATED, friendshipRequestSent.statusCode())
+
+        val friendshipAccepted = put(client, Endpoint.FRIENDSHIP_REQUEST_ACCEPT, friendship, aliceToken)
         assertEquals(StatusCode.OK, friendshipAccepted.statusCode())
+
+        val friendshipCreated = get(client, "${Endpoint.FRIENDSHIP}/${bob.getString("email")}", bobToken)
         assertEquals(StatusCode.OK, friendshipCreated.statusCode())
+
+        val bobFriends = JsonArray(friendshipCreated.body() ?: "[]")
         assertEquals(1, bobFriends.count())
-        assertEquals(
-            alice.getString("email"),
-            bobFriends.getJsonObject(0).getJsonObject("id").getString("value")
+        assertEquals(alice.getString("email"), bobFriends.getString(0))
+    }
+
+    @Test
+    @Timeout(5 * 60)
+    fun `bob sends his friend alice some messages and she load the chat`() {
+        val bobToken = login(bob)
+        val aliceToken = login(alice)
+
+        val friendshipRequestSent = eventually {
+            val req = post(client, Endpoint.FRIENDSHIP_REQUEST_SEND, friendship, bobToken)
+            if (req.statusCode() == StatusCode.FORBIDDEN) null else req
+        }
+        assertEquals(StatusCode.CREATED, friendshipRequestSent.statusCode())
+
+        val friendshipAccepted = put(client, Endpoint.FRIENDSHIP_REQUEST_ACCEPT, friendship, aliceToken)
+        assertEquals(StatusCode.OK, friendshipAccepted.statusCode())
+
+        val message1Sent = post(client, Endpoint.MESSAGE_SEND, message1, bobToken)
+        assertEquals(StatusCode.CREATED, message1Sent.statusCode())
+
+        val message2Sent = post(client, Endpoint.MESSAGE_SEND, message2, bobToken)
+        assertEquals(StatusCode.CREATED, message2Sent.statusCode())
+
+        val chatRequest = get(
+            client,
+            "${Endpoint.MESSAGE_CHAT}/${bob.getString("email")}/${alice.getString("email")}",
+            aliceToken
         )
+        assertEquals(StatusCode.OK, chatRequest.statusCode())
+
+        val chat = JsonArray(chatRequest.body())
+        assertEquals(2, chat.size())
+
+        val expected1 = chat.getJsonObject(1)
+        val expected2 = chat.getJsonObject(0)
+        assertEquals(message1.getString("content"), expected1.getString("content"))
+        assertEquals(message1.getString("sender"), expected1.getString("sender"))
+        assertEquals(message1.getString("receiver"), expected1.getString("receiver"))
+        assertEquals(message2.getString("content"), expected2.getString("content"))
+        assertEquals(message2.getString("sender"), expected2.getString("sender"))
+        assertEquals(message2.getString("receiver"), expected2.getString("receiver"))
     }
 }
