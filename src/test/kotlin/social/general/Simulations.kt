@@ -39,6 +39,14 @@ class Simulations : DockerTest() {
         .put("sender", bob.getString("email"))
         .put("receiver", alice.getString("email"))
         .put("content", "How are you doing?")
+    private val post = JsonObject()
+        .put(
+            "user",
+            JsonObject()
+                .put("email", bob.getString("email"))
+                .put("name", bob.getString("username"))
+        )
+        .put("content", "Hello world!")
     private val dockerComposePath = "docker-compose.yml"
     private lateinit var dockerComposeFile: File
     private lateinit var client: WebClient
@@ -150,5 +158,37 @@ class Simulations : DockerTest() {
         assertEquals(message2.getString("content"), expected2.getString("content"))
         assertEquals(message2.getString("sender"), expected2.getString("sender"))
         assertEquals(message2.getString("receiver"), expected2.getString("receiver"))
+    }
+
+    @Test
+    @Timeout(5 * 60)
+    fun `bob publishes a new post and alice reads it from her feed`() {
+        val bobToken = login(bob)
+        val aliceToken = login(alice)
+
+        val friendshipRequestSent = eventually {
+            val req = post(client, Endpoint.FRIENDSHIP_REQUEST_SEND, friendship, bobToken)
+            if (req.statusCode() == StatusCode.FORBIDDEN) null else req
+        }
+        assertEquals(StatusCode.CREATED, friendshipRequestSent.statusCode())
+
+        val friendshipAccepted = put(client, Endpoint.FRIENDSHIP_REQUEST_ACCEPT, friendship, aliceToken)
+        assertEquals(StatusCode.OK, friendshipAccepted.statusCode())
+
+        val postPublished = post(client, Endpoint.POST, post, bobToken)
+        assertEquals(StatusCode.CREATED, postPublished.statusCode())
+
+        val feedReceived = get(client, "${Endpoint.POST}/feed/${alice.getString("email")}", aliceToken)
+        assertEquals(StatusCode.OK, feedReceived.statusCode())
+
+        val feed = JsonObject(feedReceived.body())
+        assertEquals(alice.getString("email"), feed.getJsonObject("owner").getString("email"))
+
+        val posts = feed.getJsonArray("posts")
+        assertEquals(1, posts.size())
+
+        val bobPost = posts.getJsonObject(0)
+        assertEquals(bob.getString("email"), bobPost.getJsonObject("author").getString("email"))
+        assertEquals(post.getString("content"), bobPost.getString("content"))
     }
 }
