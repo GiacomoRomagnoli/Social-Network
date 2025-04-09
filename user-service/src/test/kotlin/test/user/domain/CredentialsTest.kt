@@ -3,7 +3,7 @@ package test.user.domain
 import org.junit.jupiter.api.Test
 import social.user.domain.Credentials
 import social.user.domain.Password
-import social.user.domain.User
+import social.user.domain.UserID
 import kotlin.test.assertTrue
 
 class CredentialsTest {
@@ -17,7 +17,7 @@ class CredentialsTest {
 
     @Test
     fun testObjectsCredentialsCreation() {
-        val it = Credentials.of(User.userIDOf("email@domain.org"), Password.of("ValidPassword123!"))
+        val it = Credentials.of(UserID.of("email@domain.org"), Password.of("ValidPassword123!"))
         assertTrue { it.id.value == "email@domain.org" }
         assertTrue { it.password.match("ValidPassword123!") }
     }

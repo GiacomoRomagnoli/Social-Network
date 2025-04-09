@@ -2,19 +2,22 @@ package social.user.domain
 
 import social.common.ddd.Entity
 import social.common.ddd.Factory
-import social.common.ddd.ID
 
 /**
  * Class to represent a user.
  * @param email the email of the user
  * @param username the username of the user
  */
-// TODO: aggiungere flag blocked e flag admin
-class User private constructor(val email: String, val username: String) : Entity<User.UserID>(UserID(email)) {
-    /**
-     * Data class to represent the user ID.
-     */
-    class UserID(value: String) : ID<String>(value)
+class User private constructor(
+    val email: String,
+    val username: String,
+    val isAdmin: Boolean,
+    val isBlocked: Boolean,
+) : Entity<UserID>(UserID.of(email)) {
+
+    fun block() = of(this.email, this.username, this.isAdmin, true)
+    fun unblock() = of(this.email, this.username, this.isAdmin, false)
+    fun rename(username: String) = of(this.email, username, this.isAdmin, this.isBlocked)
 
     /**
      * Factory companion object to create a user.
@@ -26,14 +29,8 @@ class User private constructor(val email: String, val username: String) : Entity
          * @param username the username of the user
          * @return the user
          */
-        fun of(email: String, username: String): User = User(asId(email), username)
-
-        /**
-         * Creates used ID from email.
-         * @param email the email of the user
-         * @return the user
-         */
-        fun userIDOf(email: String): UserID = UserID(asId(email))
+        fun of(email: String, username: String, isAdmin: Boolean = false, isBlocked: Boolean = false): User =
+            User(asId(email), username, isAdmin, isBlocked)
 
         /**
          * Converts email to user ID.

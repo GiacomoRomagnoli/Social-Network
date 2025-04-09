@@ -6,8 +6,8 @@ package social.user.infrastructure.persitence.sql
 object SQLOperation {
     const val INSERT_USER =
         """
-        INSERT INTO user (email, username)
-        VALUES (?, ?)
+        INSERT INTO user (email, username, admin, blocked)
+        VALUES (?, ?, ?, ?)
         """
 
     const val DELETE_USER_BY_ID =
@@ -19,7 +19,7 @@ object SQLOperation {
     const val UPDATE_USER =
         """
         UPDATE user
-        SET username = ?
+        SET username = ?, admin = ?, blocked = ?
         WHERE email = ?
         """
 

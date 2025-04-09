@@ -4,7 +4,7 @@ import com.mysql.cj.jdbc.exceptions.CommunicationsException
 import org.apache.logging.log4j.LogManager
 import social.user.application.UserRepository
 import social.user.domain.User
-import social.user.domain.User.UserID
+import social.user.domain.UserID
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -13,7 +13,6 @@ import java.sql.SQLIntegrityConstraintViolationException
 /**
  * SQL repository for users.
  */
-// TODO: aggiornare le query e il db con i nuovi flag
 class UserSQLRepository : UserRepository {
     private val logger = LogManager.getLogger(UserSQLRepository::class)
     private lateinit var connection: Connection
@@ -49,7 +48,12 @@ class UserSQLRepository : UserRepository {
         )
         val rs = ps.executeQuery()
         return if (rs.next()) {
-            User.of(rs.getString(SQLColumns.EMAIL), rs.getString(SQLColumns.USERNAME))
+            User.of(
+                rs.getString(SQLColumns.EMAIL),
+                rs.getString(SQLColumns.USERNAME),
+                rs.getBoolean(SQLColumns.ADMIN),
+                rs.getBoolean(SQLColumns.BLOCKED)
+            )
         } else {
             null
         }
@@ -63,7 +67,9 @@ class UserSQLRepository : UserRepository {
             connection,
             SQLOperation.INSERT_USER,
             entity.email,
-            entity.username
+            entity.username,
+            entity.isAdmin,
+            entity.isBlocked
         )
         ps.executeUpdate()
     }
@@ -97,7 +103,14 @@ class UserSQLRepository : UserRepository {
         val rs = ps.executeQuery()
         val users = mutableListOf<User>()
         while (rs.next()) {
-            users.add(User.of(rs.getString(SQLColumns.EMAIL), rs.getString(SQLColumns.USERNAME)))
+            users.add(
+                User.of(
+                    rs.getString(SQLColumns.EMAIL),
+                    rs.getString(SQLColumns.USERNAME),
+                    rs.getBoolean(SQLColumns.ADMIN),
+                    rs.getBoolean(SQLColumns.BLOCKED)
+                )
+            )
         }
         return users.toTypedArray()
     }
@@ -110,6 +123,8 @@ class UserSQLRepository : UserRepository {
             connection,
             SQLOperation.UPDATE_USER,
             entity.username,
+            entity.isAdmin,
+            entity.isBlocked,
             entity.email
         )
         if (ps.executeUpdate() == 0) {

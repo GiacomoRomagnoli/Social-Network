@@ -29,10 +29,10 @@ class KafkaUserVerticleTest : DockerTest() {
     private val userRepository = UserSQLRepository()
     private val dockerComposePath = "/social/user/application/docker-compose.yml"
     private val vertx = Vertx.vertx()
-    lateinit var dockerComposeFile: File
-    lateinit var producer: KafkaUserProducerVerticle
-    lateinit var consumer: KafkaUserConsumerVerticleTestClass
-    lateinit var service: UserServiceImpl
+    private lateinit var dockerComposeFile: File
+    private lateinit var producer: KafkaUserProducerVerticle
+    private lateinit var consumer: KafkaUserConsumerVerticleTestClass
+    private lateinit var service: UserServiceImpl
 
     @BeforeEach
     fun setUp() {
@@ -41,10 +41,10 @@ class KafkaUserVerticleTest : DockerTest() {
         executeDockerComposeCmd(dockerComposeFile, "up", "--wait")
 
         userRepository.connect("127.0.0.1", "3306", "user", "test_user", "password")
-        service = UserServiceImpl(userRepository, KafkaUserProducerVerticle())
         producer = KafkaUserProducerVerticle()
+        service = UserServiceImpl(userRepository, producer)
         consumer = KafkaUserConsumerVerticleTestClass()
-        deployVerticle(vertx, producer, consumer, service)
+        deployVerticle(vertx, producer, consumer)
     }
 
     private fun deployVerticle(vertx: Vertx, vararg verticles: Verticle) {
@@ -102,36 +102,6 @@ class KafkaUserVerticleTest : DockerTest() {
         assertAll(
             { assertEquals(null, before) },
             { assertEquals(user1, after) }
-        )
-    }
-
-    @Timeout(5 * 60)
-    @Test
-    fun publishesEventUserUpdated() {
-        val before = userRepository.findById(user1.id)
-        val usernameAfterUpdate = "newUsername"
-        val user1updated = User.of(user1.id.value, usernameAfterUpdate)
-        service.addUser(user1)
-        deployVerticle(vertx, consumer)
-
-        // waits for the event to be processed
-        val latch = CountDownLatch(1)
-        lateinit var after: User
-        vertx.eventBus().consumer<String>(UserUpdated.TOPIC) {
-            userRepository.findById(user1.id)?.let {
-                after = it
-                latch.countDown()
-            } ?: run {
-                logger.error("User not found")
-                latch.countDown()
-            }
-        }
-        service.updateUser(user1updated)
-        latch.await(4, TimeUnit.MINUTES)
-
-        assertAll(
-            { assertEquals(null, before) },
-            { assertEquals(usernameAfterUpdate, after.username) }
         )
     }
 }

@@ -8,4 +8,6 @@ object SQLColumns {
     const val USERNAME = "username"
     const val USER_ID = "user_id"
     const val PASSWORD = "password"
+    const val ADMIN = "admin"
+    const val BLOCKED = "blocked"
 }

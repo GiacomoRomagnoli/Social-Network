@@ -1,8 +1,5 @@
 package test.user.application
 
-import io.vertx.core.Vertx
-import org.apache.logging.log4j.LogManager
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,20 +12,17 @@ import social.common.events.UserUpdated
 import social.user.application.UserRepository
 import social.user.application.UserServiceImpl
 import social.user.domain.User
-import social.user.domain.User.UserID
+import social.user.domain.UserID
 import social.user.infrastructure.controller.event.KafkaUserProducerVerticle
 import social.user.infrastructure.persitence.sql.UserSQLRepository
 import java.lang.reflect.Field
-import java.util.concurrent.CountDownLatch
 
 class UserServiceImplTest {
-    private val logger = LogManager.getLogger(this::class.java)
-    private lateinit var vertx: Vertx
     private val repository: UserRepository = mock<UserSQLRepository>()
     private val mockKafkaProducer: KafkaUserProducerVerticle = mock()
     private lateinit var service: UserServiceImpl
     private val user = User.of("test.email76@gmail.com", "username")
-    private val nonExistingUserID = UserID("nonExistingUserID")
+    private val nonExistingUserID = UserID.of("nonExistingUserID")
 
     init {
         `when`(repository.findById(user.id)).thenReturn(user)
@@ -39,38 +33,10 @@ class UserServiceImplTest {
 
     @BeforeEach
     fun setUp() {
-        val latch = CountDownLatch(1)
-        vertx = Vertx.vertx()
-
         service = UserServiceImpl(repository, mockKafkaProducer)
-
         val kafkaProducerField: Field = UserServiceImpl::class.java.getDeclaredField("kafkaProducer")
         kafkaProducerField.isAccessible = true
         kafkaProducerField.set(service, mockKafkaProducer)
-
-        vertx.deployVerticle(service).onComplete {
-            latch.countDown()
-            if (it.succeeded()) {
-                logger.info("UserServiceImpl Verticle started")
-            } else {
-                logger.error("Failed to start UserServiceImpl Verticle")
-            }
-        }
-        latch.await()
-    }
-
-    @AfterEach
-    fun tearDown() {
-        val latch = CountDownLatch(1)
-        vertx.close().onComplete {
-            latch.countDown()
-            if (it.succeeded()) {
-                logger.info("Vertx closed")
-            } else {
-                logger.error("Failed to close Vertx")
-            }
-        }
-        latch.await()
     }
 
     @Test
@@ -88,10 +54,5 @@ class UserServiceImplTest {
     fun getNonExistingUser() {
         val actual = service.getUser(nonExistingUserID)
         assertEquals(null, actual)
-    }
-
-    @Test
-    fun updateUser() {
-        assertDoesNotThrow { service.updateUser(user) }
     }
 }

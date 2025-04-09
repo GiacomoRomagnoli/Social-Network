@@ -5,25 +5,26 @@ import social.common.ddd.ValueObject
 
 /**
  * Class to represent a Password
- * @param hash the hashed password string
+ * @param value the hashed password string
  */
-class Password private constructor(val hash: String) : ValueObject {
+class Password private constructor(val value: String, private val isHashed: Boolean) : ValueObject {
     companion object {
         private const val SPECIAL_CHARS = "!@#\$%^&*()_+\\-=\\[\\]{}|;:'\",.<>?/"
+        private val BCRYPT_PREFIXES = listOf("\$2a\$", "\$2b\$", "\$2y\$")
 
         /**
          * Factory method for Password creation
          * @param password the string representing the password
-         * @param hash flag to determine if password has to be hashed
          * @return a Password object
          */
-        fun of(password: String, hash: Boolean = true): Password {
+        fun of(password: String): Password {
             validate(password)
-            return if (hash) {
-                Password(BCrypt.hashpw(password, BCrypt.gensalt()))
-            } else {
-                Password(password)
-            }
+            return Password(password, false)
+        }
+
+        fun hashed(password: String): Password {
+            require(BCRYPT_PREFIXES.any { password.startsWith(it) })
+            return Password(password, true)
         }
 
         /**
@@ -51,12 +52,24 @@ class Password private constructor(val hash: String) : ValueObject {
      * @param password the string to be matched
      * @return true if the string match, false otherwise
      */
-    fun match(password: String) = BCrypt.checkpw(password, hash)
+    fun match(password: String) =
+        if (this.isHashed) BCrypt.checkpw(password, this.value) else password == this.value
 
     /**
      * Check if a Password object matches this Password
-     * @param hashedPassword a Password to be matched
+     * the match is possible only if at least one between password and this
+     * is not hashed
+     * @param password a Password to be matched
      * @return true if passwords match, false otherwise
      */
-    fun match(hashedPassword: Password) = hashedPassword.hash == hash
+    fun match(password: Password) = when {
+        !password.isHashed -> match(password.value)
+        !this.isHashed -> password.match(this.value)
+        else -> this.value == password.value
+    }
+
+    /**
+     * @return if this is hashed this, else a new Password with same value but hashed
+     */
+    fun hash() = if (isHashed) this else Password(BCrypt.hashpw(value, BCrypt.gensalt()), true)
 }

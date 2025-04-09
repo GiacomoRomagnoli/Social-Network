@@ -1,7 +1,9 @@
 CREATE TABLE user
 (
     email VARCHAR(255) NOT NULL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL
+    username VARCHAR(255) NOT NULL,
+    admin BIT(1) NOT NULL DEFAULT 0,
+    blocked BIT(1) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE credentials

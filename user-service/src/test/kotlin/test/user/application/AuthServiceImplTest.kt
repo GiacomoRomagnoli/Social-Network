@@ -26,7 +26,7 @@ class AuthServiceImplTest {
 
     @Test
     fun login() {
-        val jwt = service.login(Credentials.of(credentials.id.value, "1ValidPassword!", false))
+        val jwt = service.login(Credentials.of(credentials.id.value, "1ValidPassword!"))
         assertDoesNotThrow {
             println(
                 Jwts.parser().verifyWith(service.publicKey).build().parse(jwt)

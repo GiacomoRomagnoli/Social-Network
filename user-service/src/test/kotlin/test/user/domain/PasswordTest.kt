@@ -20,11 +20,12 @@ class PasswordTest {
 
     @Test
     fun testPasswordMatching() {
-        val it = Password.of("ValidPassword123!")
-        val differentSalt = Password.of("ValidPassword123!")
-        val sameSalt = Password.of(it.hash, false)
-        assertTrue { it.match("ValidPassword123!") }
-        assertTrue { it.match(sameSalt) }
-        assertFalse { it.match(differentSalt) }
+        val clear = Password.of("ValidPassword123!")
+        val hashed = Password.of("ValidPassword123!").hash()
+        val differentHash = Password.of("ValidPassword123!").hash()
+        assertTrue { clear.match(hashed) }
+        assertTrue { hashed.match(clear) }
+        assertTrue { hashed.match(hashed) }
+        assertFalse { hashed.match(differentHash) }
     }
 }

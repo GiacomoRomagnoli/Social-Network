@@ -30,7 +30,7 @@ class AuthServiceImpl(
 
     override fun login(credentials: Credentials): String {
         val db = repository.findById(credentials.id) ?: throw IllegalArgumentException("user does not exists")
-        if (db.password.match(credentials.password.hash)) {
+        if (db.password.match(credentials.password)) {
             return Jwts.builder()
                 .subject(db.id.value)
                 .signWith(keys.private)

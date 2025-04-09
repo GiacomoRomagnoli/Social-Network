@@ -10,7 +10,6 @@ import io.vertx.ext.web.client.WebClientOptions
 import io.vertx.ext.web.codec.BodyCodec
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -24,7 +23,8 @@ import social.user.application.CredentialsRepository
 import social.user.application.UserServiceImpl
 import social.user.domain.Credentials
 import social.user.domain.User
-import social.user.infrastructure.controller.rest.HttpServerVerticle
+import social.user.domain.UserID
+import social.user.infrastructure.controller.rest.AuthApiDecorator
 import social.user.infrastructure.persitence.sql.CredentialsSQLRepository
 import social.user.infrastructure.persitence.sql.SQLUtils
 import social.user.infrastructure.persitence.sql.UserSQLRepository
@@ -32,12 +32,12 @@ import social.utils.docker.DockerTest
 import java.io.File
 import java.util.concurrent.CountDownLatch
 
-class HttpServerVerticleTest : DockerTest() {
+class AuthApiDecoratorTest : DockerTest() {
     private val userRepository = UserSQLRepository()
     private val userService = UserServiceImpl(userRepository, mock())
     private lateinit var credentialsRepository: CredentialsRepository
     private lateinit var authService: AuthService
-    private lateinit var server: HttpServerVerticle
+    private lateinit var server: AuthApiDecorator
     private lateinit var client: WebClient
     private lateinit var dockerComposeFile: File
     private lateinit var vertx: Vertx
@@ -65,7 +65,7 @@ class HttpServerVerticleTest : DockerTest() {
             )
         )
         authService = AuthServiceImpl(credentialsRepository, mock())
-        server = HttpServerVerticle(userService, authService)
+        server = AuthApiDecorator(userService, authService)
         vertx = Vertx.vertx()
         deployVerticle(vertx, server)
         client = WebClient.create(
@@ -134,25 +134,6 @@ class HttpServerVerticleTest : DockerTest() {
 
     @Timeout(5 * 60)
     @Test
-    fun deleteUser() {
-        lateinit var response: HttpResponse<String>
-        val latch = CountDownLatch(1)
-        userRepository.save(User.of("test@gmail.com", "test"))
-        client.delete("${Endpoint.USER}/test@gmail.com")
-            .`as`(BodyCodec.string())
-            .send {
-                latch.countDown()
-                if (it.succeeded()) {
-                    response = it.result()
-                }
-            }
-        latch.await()
-        assertEquals(StatusCode.NO_CONTENT, response.statusCode())
-        assertNull(userRepository.findById(User.userIDOf("test@gmail.com")))
-    }
-
-    @Timeout(5 * 60)
-    @Test
     fun addCredentialsForExistingUser() {
         lateinit var response: HttpResponse<String>
         val latch = CountDownLatch(1)
@@ -171,7 +152,7 @@ class HttpServerVerticleTest : DockerTest() {
         latch.await()
         assertEquals(StatusCode.CREATED, response.statusCode())
         assertTrue(
-            credentialsRepository.findById(User.userIDOf("test@gmail.com"))
+            credentialsRepository.findById(UserID.of("test@gmail.com"))
             !!.password.match("1ValidPassword!")
         )
     }

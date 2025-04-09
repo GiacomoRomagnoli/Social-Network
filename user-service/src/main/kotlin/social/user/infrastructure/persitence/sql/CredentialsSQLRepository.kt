@@ -2,7 +2,7 @@ package social.user.infrastructure.persitence.sql
 
 import social.user.application.CredentialsRepository
 import social.user.domain.Credentials
-import social.user.domain.User.UserID
+import social.user.domain.UserID
 import social.user.infrastructure.persitence.sql.SQLUtils.mySQLConnection
 import social.user.infrastructure.persitence.sql.SQLUtils.prepareStatement
 import java.sql.Connection
@@ -20,22 +20,19 @@ class CredentialsSQLRepository(private val connection: Connection) : Credentials
             id.value
         ).executeQuery()
         return if (result.next()) {
-            Credentials.of(
-                result.getString(SQLColumns.USER_ID),
-                result.getString(SQLColumns.PASSWORD),
-                false
-            )
+            Credentials.fromHashed(result.getString(SQLColumns.USER_ID), result.getString(SQLColumns.PASSWORD))
         } else {
             null
         }
     }
 
     override fun save(entity: Credentials) {
+        val credentials = entity.hashPassword()
         prepareStatement(
             connection,
             SQLOperation.INSERT_CREDENTIALS,
-            entity.id.value,
-            entity.password.hash
+            credentials.id.value,
+            credentials.password.value
         ).executeUpdate()
     }
 
@@ -59,10 +56,9 @@ class CredentialsSQLRepository(private val connection: Connection) : Credentials
         val result = mutableListOf<Credentials>()
         while (credentials.next()) {
             result.add(
-                Credentials.of(
+                Credentials.fromHashed(
                     credentials.getString(SQLColumns.USER_ID),
-                    credentials.getString(SQLColumns.PASSWORD),
-                    false
+                    credentials.getString(SQLColumns.PASSWORD)
                 )
             )
         }
@@ -70,11 +66,12 @@ class CredentialsSQLRepository(private val connection: Connection) : Credentials
     }
 
     override fun update(entity: Credentials) {
+        val credentials = entity.hashPassword()
         prepareStatement(
             connection,
             SQLOperation.UPDATE_CREDENTIALS,
-            entity.password.hash,
-            entity.id.value
+            credentials.password.value,
+            credentials.id.value
         ).executeUpdate()
     }
 }
