@@ -9,7 +9,7 @@ import java.util.Base64
 
 interface AuthService : Service {
     fun login(credentials: Credentials): String
-    fun addCredentials(credentials: Credentials): Unit
+    fun addCredentials(credentials: Credentials)
 }
 
 class AuthServiceImpl(
