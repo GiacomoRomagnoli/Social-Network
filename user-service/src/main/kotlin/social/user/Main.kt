@@ -13,8 +13,8 @@ import java.nio.file.Paths
 
 fun main(args: Array<String>) {
     val vertx = Vertx.vertx()
-    val repository = UserSQLRepository()
-    repository.connect(
+    val userRepository = UserSQLRepository()
+    userRepository.connect(
         System.getenv("DB_HOST"),
         System.getenv("DB_PORT"),
         System.getenv("MYSQL_DATABASE"),
@@ -33,8 +33,8 @@ fun main(args: Array<String>) {
     val producer = KafkaUserProducerVerticle()
     vertx.deployVerticle(producer).onComplete {
         if (it.succeeded()) {
-            val userService = UserServiceImpl(repository, producer)
-            val authService = AuthServiceImpl(credentialsRepository, producer)
+            val userService = UserServiceImpl(userRepository, producer)
+            val authService = AuthServiceImpl(credentialsRepository, userRepository, producer)
             val server = AuthApiDecorator(userService, authService)
             vertx.deployVerticle(server)
         } else {

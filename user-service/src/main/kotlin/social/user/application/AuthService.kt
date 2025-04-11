@@ -13,7 +13,8 @@ interface AuthService : Service {
 }
 
 class AuthServiceImpl(
-    private val repository: CredentialsRepository,
+    private val credentialsRepository: CredentialsRepository,
+    private val userRepository: UserRepository,
     publisher: KafkaProducerVerticle
 ) : AuthService {
     private val keys = Jwts.SIG.RS256.keyPair().build()
@@ -29,10 +30,14 @@ class AuthServiceImpl(
     }
 
     override fun login(credentials: Credentials): String {
-        val db = repository.findById(credentials.id) ?: throw IllegalArgumentException("user does not exists")
-        if (db.password.match(credentials.password)) {
+        val dbCredentials = credentialsRepository.findById(credentials.id)
+            ?: throw IllegalArgumentException("credentials do not exists")
+        if (dbCredentials.password.match(credentials.password)) {
+            val user = userRepository.findById(credentials.id)
+                ?: throw IllegalArgumentException("user does not exists")
             return Jwts.builder()
-                .subject(db.id.value)
+                .subject(dbCredentials.id.value)
+                .claim("role", if (user.isAdmin) "admin" else "user")
                 .signWith(keys.private)
                 .compact()
         }
@@ -40,6 +45,6 @@ class AuthServiceImpl(
     }
 
     override fun addCredentials(credentials: Credentials) {
-        repository.save(credentials)
+        credentialsRepository.save(credentials)
     }
 }
