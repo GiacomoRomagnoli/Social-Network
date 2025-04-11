@@ -34,19 +34,6 @@ object UserHandlers {
         sendUnauthorizedResponse(context)
     }
 
-    fun putUser(context: RoutingContext, webClient: WebClient) {
-        val body = context.body().asJsonObject()
-        val email = body.getString("email")
-        if (email == context.get(AuthHandlers.USER_ID)) {
-            webClient
-                .put(Port.HTTP, USER_SERVICE, Endpoint.USER)
-                .sendJsonObject(body)
-                .onComplete(forwardResponse(context))
-            return
-        }
-        sendUnauthorizedResponse(context)
-    }
-
     fun postUser(context: RoutingContext, webClient: WebClient) {
         val body = context.body().asJsonObject()
         val email = body.getString("email")

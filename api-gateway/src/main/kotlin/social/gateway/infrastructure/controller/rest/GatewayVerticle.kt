@@ -44,9 +44,6 @@ open class GatewayVerticle : AbstractVerticle() {
         router.get(Endpoint.USER_EMAIL_PARAM)
             .handler(AuthHandlers::jwtAuth)
             .handler(handlerOf(UserHandlers::getUser, webClient))
-        router.put(Endpoint.USER)
-            .handler(AuthHandlers::jwtAuth)
-            .handler(handlerOf(UserHandlers::putUser, webClient))
         // Friendship
         router.get(Endpoint.FRIENDSHIP_EMAIL_PARAM)
             .handler(AuthHandlers::jwtAuth)
