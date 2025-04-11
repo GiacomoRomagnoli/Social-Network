@@ -23,15 +23,13 @@ data class UserCreated(
 }
 
 /**
- * Event to represent a user that has been updated.
+ * Interface to group user events that block or unblock users.
  */
 @JsExport
-data class UserUpdated(
-    val username: String,
-    val email: String,
-) : UserEvent {
+interface BlockingEvent : UserEvent {
+    val user: String
     companion object {
-        const val TOPIC = "user-updated"
+        const val TOPIC = "user-blocking-events"
     }
 }
 
@@ -39,78 +37,18 @@ data class UserUpdated(
  * Event to represent a user deletion.
  */
 @JsExport
-data class UserBlocked(
-    val username: String,
-) : UserEvent {
-    companion object {
-        const val TOPIC = "user-blocked"
-    }
-}
+data class UserBlocked(override val user: String) : BlockingEvent
 
 /**
  * Event to represent a user unblock.
  */
 @JsExport
-data class UserUnblocked(
-    val username: String,
-) : UserEvent {
-    companion object {
-        const val TOPIC = "user-unblocked"
-    }
-}
-
-/**
- * Event to represent a user deletion.
- */
-@JsExport
-data class UserLoggedOut(
-    val username: String,
-) : UserEvent {
-    companion object {
-        const val TOPIC = "user-logged-out"
-    }
-}
-
-/**
- * Event to represent admin unblock.
- */
-@JsExport
-data class AdminLoggedOut(
-    val username: String,
-) : UserEvent {
-    companion object {
-        const val TOPIC = "admin-logged-out"
-    }
-}
-
-/**
- * Event to represent a user login.
- */
-@JsExport
-data class UserLoggedIn(
-    val username: String,
-) : UserEvent {
-    companion object {
-        const val TOPIC = "user-logged-in"
-    }
-}
-
-/**
- * Event to represent admin login.
- */
-@JsExport
-data class AdminLoggedIn(
-    val username: String,
-) : UserEvent {
-    companion object {
-        const val TOPIC = "admin-logged-in"
-    }
-}
+data class UserUnblocked(override val user: String) : BlockingEvent
 
 @JsExport
 data class AuthKeyGenerated(
     val publicKey: String,
-) : UserEvent {
+) : DomainEvent {
     companion object {
         const val TOPIC = "auth-key-generated"
     }

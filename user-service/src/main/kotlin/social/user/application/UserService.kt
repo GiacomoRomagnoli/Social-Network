@@ -1,7 +1,9 @@
 package social.user.application
 
 import social.common.ddd.Service
+import social.common.events.UserBlocked
 import social.common.events.UserCreated
+import social.common.events.UserUnblocked
 import social.user.domain.User
 import social.user.domain.UserID
 
@@ -45,12 +47,14 @@ class UserServiceImpl(
         val user = repository.findById(id)?.block()
             ?: throw IllegalArgumentException("user $id does not exist")
         repository.update(user)
+        kafkaProducer.publishEvent(UserBlocked(user.id.value))
     }
 
     override fun unblockUser(id: UserID) {
         val user = repository.findById(id)?.unblock()
             ?: throw IllegalArgumentException("user $id does not exist")
         repository.update(user)
+        kafkaProducer.publishEvent(UserUnblocked(user.id.value))
     }
 
     override fun deleteUser(id: UserID) = repository.deleteById(id)
