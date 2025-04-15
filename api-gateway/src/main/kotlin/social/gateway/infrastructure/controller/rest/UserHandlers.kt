@@ -82,4 +82,16 @@ object UserHandlers {
                 sendServiceUnavailableResponse(context)
             }
     }
+
+    fun blockUser(context: RoutingContext, webClient: WebClient) {
+        webClient.post(Port.HTTP, USER_SERVICE, context.request().uri())
+            .send()
+            .onComplete(forwardResponse(context))
+    }
+
+    fun unblockUser(context: RoutingContext, webClient: WebClient) {
+        webClient.post(Port.HTTP, USER_SERVICE, context.request().uri())
+            .send()
+            .onComplete(forwardResponse(context))
+    }
 }

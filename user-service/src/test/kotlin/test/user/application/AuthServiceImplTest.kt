@@ -8,20 +8,25 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import social.user.application.AuthServiceImpl
 import social.user.application.CredentialsRepository
+import social.user.application.UserRepository
 import social.user.domain.Credentials
+import social.user.domain.User
 import social.user.infrastructure.controller.event.KafkaUserProducerVerticle
 import social.user.infrastructure.persitence.sql.CredentialsSQLRepository
 
 class AuthServiceImplTest {
-    private val repository: CredentialsRepository = mock<CredentialsSQLRepository>()
+    private val credentialsRepository: CredentialsRepository = mock<CredentialsSQLRepository>()
+    private val userRepository = mock<UserRepository>()
     private val mockKafkaProducer: KafkaUserProducerVerticle = mock()
     private val credentials = Credentials.of("email@domain.org", "1ValidPassword!")
+    private val user = User.of(credentials.id.value, "name")
     private lateinit var service: AuthServiceImpl
 
     @BeforeEach
     fun setUp() {
-        `when`(repository.findById(credentials.id)).thenReturn(credentials)
-        service = AuthServiceImpl(repository, mockKafkaProducer)
+        `when`(credentialsRepository.findById(credentials.id)).thenReturn(credentials)
+        `when`(userRepository.findById(credentials.id)).thenReturn(user)
+        service = AuthServiceImpl(credentialsRepository, userRepository, mockKafkaProducer)
     }
 
     @Test

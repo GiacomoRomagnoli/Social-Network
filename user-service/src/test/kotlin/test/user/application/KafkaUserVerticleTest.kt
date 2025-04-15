@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.assertAll
 import social.common.events.UserCreated
-import social.common.events.UserUpdated
 import social.user.application.UserServiceImpl
 import social.user.domain.User
 import social.user.infrastructure.controller.event.KafkaUserProducerVerticle
@@ -120,7 +119,6 @@ class KafkaUserConsumerVerticleTestClass : AbstractVerticle() {
     )
     private val events: MutableSet<String> = mutableSetOf(
         UserCreated.TOPIC,
-        UserUpdated.TOPIC,
     )
     private lateinit var consumer: KafkaConsumer<String, String>
 
@@ -154,7 +152,6 @@ class KafkaUserConsumerVerticleTestClass : AbstractVerticle() {
             logger.trace("Received event: TOPIC:{}, KEY:{}, VALUE:{}", record.topic(), record.key(), record.value())
             when (record.topic()) {
                 UserCreated.TOPIC -> userCreatedHandler(record)
-                UserUpdated.TOPIC -> userUpdatedHandler(record)
                 else -> logger.warn("Received event from unknown topic: {}", record.topic())
             }
         }
@@ -165,12 +162,5 @@ class KafkaUserConsumerVerticleTestClass : AbstractVerticle() {
      */
     private fun userCreatedHandler(record: KafkaConsumerRecord<String, String>) {
         vertx.eventBus().publish(UserCreated.TOPIC, record.value())
-    }
-
-    /**
-     * Simply forwards the event to the event bus to be able to check whether the test has been successful.
-     */
-    private fun userUpdatedHandler(record: KafkaConsumerRecord<String, String>) {
-        vertx.eventBus().publish(UserUpdated.TOPIC, record.value())
     }
 }

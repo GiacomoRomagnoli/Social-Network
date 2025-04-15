@@ -8,7 +8,6 @@ import org.mockito.Mockito.doNothing
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import social.common.events.UserCreated
-import social.common.events.UserUpdated
 import social.user.application.UserRepository
 import social.user.application.UserServiceImpl
 import social.user.domain.User
@@ -28,7 +27,6 @@ class UserServiceImplTest {
         `when`(repository.findById(user.id)).thenReturn(user)
         `when`(repository.findById(nonExistingUserID)).thenReturn(null)
         doNothing().`when`(mockKafkaProducer).publishEvent(UserCreated(user.id.value, user.username))
-        doNothing().`when`(mockKafkaProducer).publishEvent(UserUpdated(user.id.value, user.username))
     }
 
     @BeforeEach

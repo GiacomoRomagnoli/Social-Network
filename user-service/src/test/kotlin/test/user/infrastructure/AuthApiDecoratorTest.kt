@@ -64,7 +64,7 @@ class AuthApiDecoratorTest : DockerTest() {
                 "password"
             )
         )
-        authService = AuthServiceImpl(credentialsRepository, mock())
+        authService = AuthServiceImpl(credentialsRepository, userRepository, mock())
         server = AuthApiDecorator(userService, authService)
         vertx = Vertx.vertx()
         deployVerticle(vertx, server)

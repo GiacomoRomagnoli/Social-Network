@@ -38,6 +38,7 @@ class AuthServiceImpl(
             return Jwts.builder()
                 .subject(dbCredentials.id.value)
                 .claim("role", if (user.isAdmin) "admin" else "user")
+                .claim("state", if (user.isBlocked) "blocked" else "unblocked")
                 .signWith(keys.private)
                 .compact()
         }
