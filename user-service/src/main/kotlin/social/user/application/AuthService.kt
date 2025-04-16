@@ -6,6 +6,7 @@ import social.common.events.AuthKeyGenerated
 import social.user.domain.Credentials
 import java.security.PublicKey
 import java.util.Base64
+import java.util.Date
 
 interface AuthService : Service {
     fun login(credentials: Credentials): String
@@ -39,6 +40,7 @@ class AuthServiceImpl(
                 .subject(dbCredentials.id.value)
                 .claim("role", if (user.isAdmin) "admin" else "user")
                 .claim("state", if (user.isBlocked) "blocked" else "unblocked")
+                .expiration(Date(System.currentTimeMillis() + (15 * 60 * 1000)))
                 .signWith(keys.private)
                 .compact()
         }

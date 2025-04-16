@@ -5,6 +5,7 @@ import io.vertx.ext.web.RoutingContext
 import social.gateway.infrastructure.controller.rest.Utils.sendServiceUnavailableResponse
 import social.gateway.infrastructure.controller.rest.Utils.sendUnauthorizedResponse
 import java.security.PublicKey
+import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
 object AuthHandlers {
@@ -26,6 +27,10 @@ object AuthHandlers {
         try {
             val token = authHeader.removePrefix("Bearer ").trim()
             val claims = Jwts.parser().verifyWith(publicKey.get()).build().parseSignedClaims(token).payload
+            if (claims.expiration.before(Date(System.currentTimeMillis()))) {
+                sendUnauthorizedResponse(context, "expired token")
+                return
+            }
             context.put(USER_ID, claims.subject)
             context.put(USER_ROLE, claims["role"] as String)
             context.put(USER_STATE, claims["state"] as String)

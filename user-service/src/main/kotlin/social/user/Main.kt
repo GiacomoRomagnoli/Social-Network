@@ -2,7 +2,11 @@ package social.user
 
 import io.vertx.core.Vertx
 import social.user.application.AuthServiceImpl
+import social.user.application.CredentialsRepository
+import social.user.application.UserRepository
 import social.user.application.UserServiceImpl
+import social.user.domain.Credentials
+import social.user.domain.User
 import social.user.infrastructure.controller.event.KafkaUserProducerVerticle
 import social.user.infrastructure.controller.rest.AuthApiDecorator
 import social.user.infrastructure.persitence.sql.CredentialsSQLRepository
@@ -10,6 +14,16 @@ import social.user.infrastructure.persitence.sql.SQLUtils
 import social.user.infrastructure.persitence.sql.UserSQLRepository
 import java.nio.file.Files
 import java.nio.file.Paths
+
+private fun adminRegistration(
+    user: User,
+    credentials: Credentials,
+    userRepository: UserRepository,
+    credentialsRepository: CredentialsRepository
+) {
+    userRepository.save(user)
+    credentialsRepository.save(credentials)
+}
 
 fun main(args: Array<String>) {
     val vertx = Vertx.vertx()
@@ -29,6 +43,12 @@ fun main(args: Array<String>) {
             System.getenv("MYSQL_USER"),
             Files.readString(Paths.get("/run/secrets/db_password")).trim()
         )
+    )
+    adminRegistration(
+        User.of("admin@social.com", "admin", isAdmin = true),
+        Credentials.of("admin@social.com", "AdminTest123!"),
+        userRepository,
+        credentialsRepository
     )
     val producer = KafkaUserProducerVerticle()
     vertx.deployVerticle(producer).onComplete {

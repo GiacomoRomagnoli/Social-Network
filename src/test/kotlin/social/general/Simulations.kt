@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import social.common.endpoint.Endpoint
+import social.common.endpoint.Endpoint.EMAIL_PARAM
 import social.common.endpoint.Port
 import social.common.endpoint.StatusCode
 import social.utils.docker.DockerTest
@@ -20,6 +21,9 @@ import social.utils.http.TestRequestUtils.put
 import java.io.File
 
 class Simulations : DockerTest() {
+    private val admin = JsonObject()
+        .put("email", "admin@social.com")
+        .put("password", "AdminTest123!")
     private val bob = JsonObject()
         .put("email", "bob@test.com")
         .put("username", "bob")
@@ -190,5 +194,22 @@ class Simulations : DockerTest() {
         val bobPost = posts.getJsonObject(0)
         assertEquals(bob.getString("email"), bobPost.getJsonObject("author").getString("email"))
         assertEquals(post.getString("content"), bobPost.getString("content"))
+    }
+
+    @Test
+    @Timeout(5 * 60)
+    fun `bob has been blocked so he can't publish any post`() {
+        val adminToken = login(admin)
+        val userBlocked = post(
+            client,
+            Endpoint.BLOCK_USER.replace(":$EMAIL_PARAM", bob.getString("email")),
+            JsonObject(),
+            adminToken
+        )
+        assertEquals(StatusCode.NO_CONTENT, userBlocked.statusCode())
+
+        val bobToken = login(bob)
+        val postPublished = post(client, Endpoint.POST, post, bobToken)
+        assertEquals(StatusCode.UNAUTHORIZED, postPublished.statusCode())
     }
 }
