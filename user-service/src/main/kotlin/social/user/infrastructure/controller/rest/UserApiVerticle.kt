@@ -70,6 +70,7 @@ open class UserApiVerticle(protected val service: UserService) : AbstractVerticl
             sendResponse(ctx, StatusCode.OK)
         }
 
+        router.get(Endpoint.USER_COUNT).handler(::getUserCount)
         router.post(Endpoint.USER).handler(::addUser)
         router.get(Endpoint.USER).handler(::getUser)
         router.delete(Endpoint.USER_EMAIL_PARAM).handler(::deleteUser)
@@ -140,6 +141,14 @@ open class UserApiVerticle(protected val service: UserService) : AbstractVerticl
                     ?: throw IllegalStateException("User not found")
             }
         ).onComplete(respond(context, StatusCode.NO_CONTENT))
+    }
+
+    private fun getUserCount(ctx: RoutingContext) {
+        this.context.executeBlocking(
+            Callable {
+                service.getUserCount()
+            }
+        ).onComplete(respond(ctx, StatusCode.OK))
     }
 
     protected fun <T> respond(ctx: RoutingContext, statusCode: Int): (AsyncResult<T>) -> Unit =

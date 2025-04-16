@@ -15,6 +15,7 @@ interface UserService : Service {
     fun deleteUser(id: UserID): User?
     fun blockUser(id: UserID)
     fun unblockUser(id: UserID)
+    fun getUserCount(): Int
 }
 
 /**
@@ -52,6 +53,8 @@ class UserServiceImpl(
             ?: throw IllegalArgumentException("user $id does not exist")
         repository.update(user)
     }
+
+    override fun getUserCount() = repository.userCount()
 
     override fun deleteUser(id: UserID) = repository.deleteById(id)
 }

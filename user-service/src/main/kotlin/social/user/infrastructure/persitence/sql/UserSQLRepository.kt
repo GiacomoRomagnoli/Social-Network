@@ -37,6 +37,13 @@ class UserSQLRepository : UserRepository {
         connection = SQLUtils.mySQLConnection(host, port, database, username, password)
     }
 
+    override fun userCount(): Int {
+        val ps = SQLUtils.prepareStatement(connection, SQLOperation.USER_COUNT)
+        val rs = ps.executeQuery()
+        rs.next()
+        return rs.getInt(1)
+    }
+
     /**
      * Find a user by ID.
      */

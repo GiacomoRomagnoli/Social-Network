@@ -4,6 +4,10 @@ package social.user.infrastructure.persitence.sql
  * Object to store the SQL operations.
  */
 object SQLOperation {
+    const val USER_COUNT =
+        """
+            SELECT COUNT(*) FROM user
+        """
     const val INSERT_USER =
         """
         INSERT INTO user (email, username, admin, blocked)

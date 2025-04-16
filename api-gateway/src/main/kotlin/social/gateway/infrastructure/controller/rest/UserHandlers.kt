@@ -94,4 +94,10 @@ object UserHandlers {
             .send()
             .onComplete(forwardResponse(context))
     }
+
+    fun userCount(context: RoutingContext, webClient: WebClient) {
+        webClient.get(Port.HTTP, USER_SERVICE, context.request().uri())
+            .send()
+            .onComplete(forwardResponse(context))
+    }
 }

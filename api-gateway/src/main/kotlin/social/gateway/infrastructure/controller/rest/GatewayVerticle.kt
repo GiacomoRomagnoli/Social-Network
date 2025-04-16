@@ -39,6 +39,10 @@ open class GatewayVerticle : AbstractVerticle() {
         // User
         router.post(Endpoint.LOGIN)
             .handler(handlerOf(UserHandlers::login, webClient))
+        router.get(Endpoint.USER_COUNT)
+            .handler(AuthHandlers::jwtAuth)
+            .handler(AuthHandlers::adminAuth)
+            .handler(handlerOf(UserHandlers::userCount, webClient))
         router.post(Endpoint.USER)
             .handler(handlerOf(UserHandlers::postUser, webClient))
         router.get(Endpoint.USER_EMAIL_PARAM)

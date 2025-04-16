@@ -7,4 +7,6 @@ import social.user.domain.UserID
 /**
  * Repository to manage users.
  */
-interface UserRepository : Repository<UserID, User>
+interface UserRepository : Repository<UserID, User> {
+    fun userCount(): Int
+}

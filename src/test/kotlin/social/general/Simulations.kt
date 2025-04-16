@@ -212,4 +212,14 @@ class Simulations : DockerTest() {
         val postPublished = post(client, Endpoint.POST, post, bobToken)
         assertEquals(StatusCode.UNAUTHORIZED, postPublished.statusCode())
     }
+
+    @Test
+    @Timeout(5 * 60)
+    fun `admin checks total user number`() {
+        val adminToken = login(admin)
+        val userCount = get(client, Endpoint.USER_COUNT, adminToken)
+        println(userCount.body())
+        assertEquals(StatusCode.OK, userCount.statusCode())
+        assertEquals("3", userCount.body())
+    }
 }

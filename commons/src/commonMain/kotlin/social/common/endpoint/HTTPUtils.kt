@@ -39,6 +39,7 @@ object Endpoint {
     const val POST_EMAIL_PARAM = "$POST/:$EMAIL_PARAM"
     const val BLOCK_USER = "$USER_USERS_PATH/:$EMAIL_PARAM/block"
     const val UNBLOCK_USER = "$USER_USERS_PATH/:$EMAIL_PARAM/unblock"
+    const val USER_COUNT = "$USER_USERS_PATH/count"
 }
 
 /**
