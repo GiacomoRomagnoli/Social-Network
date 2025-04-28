@@ -22,6 +22,8 @@ dependencies {
     implementation(libs.vertx.web)
     implementation(libs.vertx.web.client)
     implementation(libs.vertx.kafka.client)
+    implementation(libs.vertx.micrometer.metrics)
+    implementation(libs.vertx.micrometer.registry.prometheus)
     implementation(libs.jackson.core)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.mysql.connector.java)

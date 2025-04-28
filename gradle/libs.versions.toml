@@ -15,6 +15,7 @@ shadowjar-version = "8.1.1"
 task-tree-version = "4.0.0"
 bcrypt-version = "0.4"
 jjwt = "0.12.6"
+micrometer = "1.12.3"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -28,6 +29,8 @@ vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 vertx-web = { module = "io.vertx:vertx-web", version.ref = "vertx" }
 vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx" }
 vertx-kafka-client = { module = "io.vertx:vertx-kafka-client", version.ref = "vertx" }
+vertx-micrometer-metrics = { module = "io.vertx:vertx-micrometer-metrics", version.ref = "vertx"}
+vertx-micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer"}
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-data-type = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson"}

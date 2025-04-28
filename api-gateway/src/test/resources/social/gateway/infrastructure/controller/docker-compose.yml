@@ -129,3 +129,13 @@ services:
       timeout: 10s
       retries: 5
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - private_network
+      - public_network

@@ -178,4 +178,40 @@ class GatewayTest : DockerTest() {
         assertEquals(user.getString("email"), JsonObject(operation.body()).getString("email"))
         assertEquals(user.getString("username"), JsonObject(operation.body()).getString("username"))
     }
+
+    @Test
+    fun jsonMetricsFlow() {
+        val credentials = JsonObject()
+            .put("email", "admin@social.com")
+            .put("password", "AdminTest123!")
+        lateinit var login: HttpResponse<String>
+        var latch = CountDownLatch(1)
+        client.post(Endpoint.LOGIN)
+            .putHeader("content-type", "application/json")
+            .`as`(BodyCodec.string())
+            .sendJsonObject(credentials) {
+                if (it.succeeded()) {
+                    login = it.result()
+                }
+                latch.countDown()
+            }
+        latch.await()
+        assertEquals(StatusCode.OK, login.statusCode())
+
+        latch = CountDownLatch(1)
+        lateinit var metrics: HttpResponse<String>
+        client.get("metrics/query")
+            .addQueryParam("query", "http_requests_total")
+            .putHeader("Authorization", "Bearer ${login.body()}")
+            .`as`(BodyCodec.string())
+            .send {
+                if (it.succeeded()) {
+                    metrics = it.result()
+                }
+                latch.countDown()
+            }
+        latch.await()
+        println(metrics.statusCode())
+        println(metrics.body())
+    }
 }

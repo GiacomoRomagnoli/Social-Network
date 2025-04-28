@@ -21,6 +21,8 @@ open class GatewayVerticle : AbstractVerticle() {
         val router = Router.router(vertx)
         val webClient = WebClient.create(vertx)
         router.route().handler(BodyHandler.create())
+        router.route()
+            .handler(MetricsHandlers::counter)
         addEndPoints(router, webClient)
         vertx.createHttpServer(options()).requestHandler(router).listen(Port.HTTP).onComplete {
             if (it.succeeded()) {
@@ -104,6 +106,9 @@ open class GatewayVerticle : AbstractVerticle() {
             .handler(AuthHandlers::jwtAuth)
             .handler(AuthHandlers::blockedAuth)
             .handler(handlerOf(ContentHandlers::getPosts, webClient))
+        // Metrics
+        router.get("/metrics")
+            .handler(MetricsHandlers::prometheusGetMetrics)
     }
 
     protected open fun options(): HttpServerOptions {
