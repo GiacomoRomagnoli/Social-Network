@@ -302,7 +302,7 @@ class RESTFriendshipAPIVerticleImpl(private val service: FriendshipService) : Ab
                 logger.debug("Received POST request: '{}'", requestBody.asString())
 
                 val message = Mapper.readValue(requestBody.asString(), Message::class.java)
-                service.addMessage(message)
+                service.sentMessage(message)
             }
         ).onComplete {
             if (it.succeeded()) {

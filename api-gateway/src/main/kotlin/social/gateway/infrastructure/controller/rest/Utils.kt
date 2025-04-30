@@ -13,7 +13,7 @@ object Utils {
             if (it.succeeded()) {
                 sendResponse(context, it.result().statusCode(), it.result().body())
             } else {
-                sendServiceUnavailableResponse(context)
+                sendServiceUnavailableResponse(context, it.cause().message)
             }
         }
 

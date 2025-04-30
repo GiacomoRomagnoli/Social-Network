@@ -1,6 +1,8 @@
 package social.general
 
 import io.vertx.core.Vertx
+import io.vertx.core.http.HttpClientOptions
+import io.vertx.core.http.WebSocketConnectOptions
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.client.WebClient
@@ -14,11 +16,14 @@ import social.common.endpoint.Endpoint
 import social.common.endpoint.Endpoint.EMAIL_PARAM
 import social.common.endpoint.Port
 import social.common.endpoint.StatusCode
+import social.common.events.FriendshipRequestSent
+import social.common.events.MessageSent
 import social.utils.docker.DockerTest
 import social.utils.http.TestRequestUtils.get
 import social.utils.http.TestRequestUtils.post
 import social.utils.http.TestRequestUtils.put
 import java.io.File
+import java.util.concurrent.CountDownLatch
 
 class Simulations : DockerTest() {
     private val admin = JsonObject()
@@ -221,5 +226,59 @@ class Simulations : DockerTest() {
         println(userCount.body())
         assertEquals(StatusCode.OK, userCount.statusCode())
         assertEquals("3", userCount.body())
+    }
+
+    @Test
+    @Timeout(3 * 60)
+    fun `bob and alice become friends and bob send a message to alice and she receive notifications`() {
+        lateinit var event: JsonObject
+        val requestSent = CountDownLatch(1)
+        val messageSent = CountDownLatch(1)
+        val aliceAuth = CountDownLatch(1)
+        val wsClient = vertx.createHttpClient(HttpClientOptions().setSsl(true).setTrustAll(true).setVerifyHost(false))
+        val options: WebSocketConnectOptions = WebSocketConnectOptions()
+            .setURI("/")
+            .setHost("localhost")
+            .setPort(8081)
+        val bobToken = login(bob)
+        val aliceToken = login(alice)
+
+        wsClient.webSocket(options).onSuccess { ws ->
+            ws.textMessageHandler {
+                event = JsonObject(it)
+                println("socket: \n$event")
+                when (event.getString("type")) {
+                    MessageSent.TOPIC -> messageSent.countDown()
+                    FriendshipRequestSent.TOPIC -> requestSent.countDown()
+                    else -> aliceAuth.countDown()
+                }
+            }
+            ws.writeTextMessage(aliceToken)
+        }.onFailure { println("web socket failed"); aliceAuth.countDown() }
+        aliceAuth.await()
+        assertEquals("authenticated", event.getString("type"))
+
+        val friendshipRequestSent = eventually {
+            val req = post(client, Endpoint.FRIENDSHIP_REQUEST_SEND, friendship, bobToken)
+            if (req.statusCode() == StatusCode.FORBIDDEN) null else req
+        }
+        assertEquals(StatusCode.CREATED, friendshipRequestSent.statusCode())
+
+        requestSent.await()
+        assertEquals(bob.getString("email"), event.getString("sender"))
+        assertEquals(alice.getString("email"), event.getString("receiver"))
+
+        val friendshipAccepted = put(client, Endpoint.FRIENDSHIP_REQUEST_ACCEPT, friendship, aliceToken)
+        assertEquals(StatusCode.OK, friendshipAccepted.statusCode())
+
+        val message1Sent = post(client, Endpoint.MESSAGE_SEND, message1, bobToken)
+        assertEquals(StatusCode.CREATED, message1Sent.statusCode())
+
+        println("awaiting...")
+        messageSent.await()
+        println("done!")
+        assertEquals(bob.getString("email"), event.getString("sender"))
+        assertEquals(alice.getString("email"), event.getString("receiver"))
+        assertEquals(message1.getString("content"), event.getString("message"))
     }
 }

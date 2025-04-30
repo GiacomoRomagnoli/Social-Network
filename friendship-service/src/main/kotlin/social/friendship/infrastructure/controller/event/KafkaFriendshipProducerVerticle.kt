@@ -8,6 +8,7 @@ import social.common.ddd.DomainEvent
 import social.common.events.FriendshipRemoved
 import social.common.events.FriendshipRequestAccepted
 import social.common.events.FriendshipRequestRejected
+import social.common.events.FriendshipRequestSent
 import social.common.events.MessageSent
 import social.friendship.application.KafkaProducerVerticle
 import social.friendship.social.friendship.infrastructure.serialization.jackson.Mapper
@@ -42,6 +43,7 @@ class KafkaFriendshipProducerVerticle : AbstractVerticle(), KafkaProducerVerticl
      */
     override fun publishEvent(event: DomainEvent) {
         when (event) {
+            is FriendshipRequestSent -> publish(FriendshipRequestSent.TOPIC, Mapper.writeValueAsString(event))
             is FriendshipRemoved -> publish(FriendshipRemoved.Companion.TOPIC, Mapper.writeValueAsString(event))
             is FriendshipRequestRejected -> publish(FriendshipRequestRejected.Companion.TOPIC, Mapper.writeValueAsString(event))
             is FriendshipRequestAccepted -> publish(FriendshipRequestAccepted.Companion.TOPIC, Mapper.writeValueAsString(event))

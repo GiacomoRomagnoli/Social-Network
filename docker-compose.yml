@@ -144,6 +144,27 @@ services:
     networks:
       - private_network
 
+  notification-service:
+    build: ./notification-service
+    image: notification-service
+    container_name: notification-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+    healthcheck:
+      test: [ "CMD", "curl", "-k", "-f", "https://notification-service:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    ports:
+      - "8081:8080"
+    networks:
+      - private_network
+      - public_network
+
   content-service:
     build: ./content-service
     image: content-service
@@ -213,6 +234,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - private_network
+      - public_network
 
 secrets:
   db_root_password:

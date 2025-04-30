@@ -5,6 +5,7 @@ import social.common.ddd.Service
 import social.common.events.FriendshipRemoved
 import social.common.events.FriendshipRequestAccepted
 import social.common.events.FriendshipRequestRejected
+import social.common.events.FriendshipRequestSent
 import social.common.events.MessageReceived
 import social.common.events.MessageSent
 import social.friendship.domain.Friendship
@@ -135,7 +136,14 @@ class FriendshipServiceImpl(
      * Adds a friendship request.
      * @param friendshipRequest The friendship request to add.
      */
-    override fun addFriendshipRequest(friendshipRequest: FriendshipRequest) = friendshipRequestRepository.save(friendshipRequest)
+    override fun addFriendshipRequest(friendshipRequest: FriendshipRequest) {
+        friendshipRequestRepository.save(friendshipRequest)
+        val event = FriendshipRequestSent(
+            sender = friendshipRequest.from.id.value,
+            receiver = friendshipRequest.to.id.value,
+        )
+        kafkaProducer.publishEvent(event)
+    }
 
     /**
      * Retrieves a friendship request by its ID.
@@ -152,7 +160,10 @@ class FriendshipServiceImpl(
      */
     override fun rejectFriendshipRequest(friendshipRequest: FriendshipRequest): FriendshipRequest {
         return friendshipRequestRepository.deleteById(friendshipRequest.id)?.also {
-            val event = FriendshipRequestRejected(it.to.id.value, it.from.id.value)
+            val event = FriendshipRequestRejected(
+                sender = it.to.id.value,
+                receiver = it.from.id.value
+            )
             kafkaProducer.publishEvent(event)
         } ?: throw IllegalArgumentException("Friendship request not found")
     }
@@ -178,7 +189,10 @@ class FriendshipServiceImpl(
     override fun acceptFriendshipRequest(request: FriendshipRequest) {
         friendshipRequestRepository.deleteById(request.id)?.let {
             friendshipRepository.save(Friendship.of(request))
-            val event = FriendshipRequestAccepted(request.to.id.value, request.from.id.value)
+            val event = FriendshipRequestAccepted(
+                sender = request.to.id.value,
+                receiver = request.from.id.value
+            )
             kafkaProducer.publishEvent(event)
         } ?: throw IllegalArgumentException("Friendship request not found")
     }
@@ -196,10 +210,11 @@ class FriendshipServiceImpl(
     override fun receivedMessage(message: Message) {
         messageRepository.save(message)
         val event = MessageReceived(
-            message.id.value.toString(),
-            message.sender.id.value,
-            message.receiver.id.value,
-            message.content
+            id = message.id.value.toString(),
+            sender = message.sender.id.value,
+            receiver = message.receiver.id.value,
+            message = message.content,
+            timestamp = message.timestamp.toString()
         )
         kafkaProducer.publishEvent(event)
     }
@@ -211,10 +226,11 @@ class FriendshipServiceImpl(
     override fun sentMessage(message: Message) {
         messageRepository.save(message)
         val event = MessageSent(
-            message.id.value.toString(),
-            message.sender.id.value,
-            message.receiver.id.value,
-            message.content
+            id = message.id.value.toString(),
+            sender = message.sender.id.value,
+            receiver = message.receiver.id.value,
+            message = message.content,
+            timestamp = message.timestamp.toString()
         )
         kafkaProducer.publishEvent(event)
     }
