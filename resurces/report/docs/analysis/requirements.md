@@ -114,4 +114,33 @@ in this case, the future community and system administrators.
    I want to receive a notification when something critical happens in the system,\
    so that I can prevent the system crash when users publish too much posts.
 
+## Quality Attributes
+Non-Functional Property (or Quality attributes) 
+of a software system are constraint on the manner in which the system implements and delivers its functionality.
+
+In our case, we have identified the following non-functional properties.
+
+### Operational Properties
+1. **Scalability**\
+   Ability of horizontal scalability to handle increasing operational load.
+2. **Observability**\
+   Monitoring of system performance.
+3. **Reliability**\
+   System consistency.
+
+### Structural Properties
+1. **Extensibility**\
+   Clearly defined architecture to allow the addition of new features.
+2. **Maintainability**\
+   Artifact modularity, well-structured and understandable source code.
+3. **Testability**\
+   - Automated testing.
+   - Unit Testing.
+   - Integration testing.
+
+### Security Properties
+1. Authentication of users to verify their identity.
+2. Authorization of users to access resources according to established rules.
+3. Encryption to ensure confidentiality of user passwords.
+
 [« Back to Index](../docs.md) | [Next »](../design/event-storming.md)

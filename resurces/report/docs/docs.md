@@ -3,6 +3,7 @@
 - Design
     - [Event Storming](./design/event-storming.md)
     - [Bounded Context](./design/bounded-context.md)
+    - [Patterns](./design/patterns.md)
 - Implementation
     - [Incremental Development](./implementation/incremental-development.md)
     - [DDD](./implementation/ddd.md)
