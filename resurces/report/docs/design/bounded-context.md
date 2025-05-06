@@ -12,6 +12,7 @@ The `Users` bounded context manages everything related to the users,
 authentication and access to app features.
 
 ![Users](./img/Users.jpg)
+![Credentials](./img/Credentials.jpg)
 
 ### Events
 - `UserCreated`

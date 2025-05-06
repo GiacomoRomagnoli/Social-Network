@@ -13,7 +13,7 @@ open class ID<I> (open val id: I) : ValueObject {
     }
 
     override fun hashCode(): Int {
-        return id.hashCode()
+        return this.id.hashCode()
     }
 
     override fun toString(): String {

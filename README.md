@@ -12,7 +12,6 @@
 # About the Project
 The project is developed and maintained by:
 - Giacomo Romagnoli - giacomo.romagnoli4@studio.unibo.it
-- Marco Fontana - marco.fontana17@studio.unibo.it
 
 ## Abstract
 The current market includes several social networks, 
@@ -34,6 +33,7 @@ or adding distinctive features.
 - Ktlint
 - MySQL Connector
 - JUnit
+- BCrypt
 ### Typescript Microservices
 - NodeJS
 - Typescript

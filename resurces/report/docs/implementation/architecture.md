@@ -1,13 +1,14 @@
 # The Big Picture
 Below is a component-and-connector diagram describing the implemented architecture.
-This architecture includes three microservices, one for each bounded context identified during the design phase.
-The decision to introduce middleware, specifically Kafka, 
-stems from the need to achieve eventual consistency within the system through event sourcing. 
-Moreover, this solution simplifies the implementation of the notification system,
-as the events produced by the services can be consumed by other services or 
-hypothetical clients that register a consumer.
+This architecture consists of three microservices, each aligned with a distinct bounded context, 
+and an API gateway that serves as the single entry point to the system. 
+The decision to introduce an event broker stems from the need to achieve eventual consistency through event sourcing. 
+Furthermore, by simply adding a proxy that exposes a WebSocket interface, 
+clients can listen for relevant events and receive real-time notifications. 
+Prometheus has been integrated to provide system metrics to the client, 
+which are exposed via a REST interface from the API gateway.
 
-![Components And Connectors](./img/ComponentsAndConnectors.jpg)
+![Components And Connectors](./img/C&C.jpg)
 
 From a persistence perspective, each service relies on a database isolated from the rest of the system, 
 allowing each service to scale independently of the others.

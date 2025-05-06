@@ -96,15 +96,22 @@ Each container for a service joins the default network and is both reachable by 
 and discoverable by the service's name. 
 The top-level networks element lets you configure named networks that can be reused across multiple services.
 
-For this purpose, we used a bridge network, which is the default type.
+To this end, two separate bridge networks were created: public-network, which is exposed externally, 
+and private-network, an internal network used exclusively for internal system communication. 
+Naturally, nodes that expose an interface to the client are connected to both networks, 
+while the other components remain isolated within the private network. 
+This pattern helps protect sensitive components, 
+reducing the need for security measures to only the externally exposed nodes.
 
 In terms of networking, a bridge network is a Link Layer device which forwards traffic between network segments. 
 A bridge can be a software device running within a host machine's kernel.
-
+An internal network, on the other hand, allows nodes to be contacted only by other nodes that belong to the same network.
 ```yaml
 networks:
-  app-network:
-    driver: bridge
+  public-network:
+    internal: false
+  private-network:
+    internal: true
 ```
 
 [« Back to Index](../docs.md) | [« Previous](../devops/ci.md) | [Next »](../conclusions/conclusions.md)
