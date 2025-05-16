@@ -33,7 +33,7 @@ jobs:
 
       # we chose this action because it already contains several CI steps we needed, like 'build' 'test'
       - name: Build using Gradle
-        uses: DanySK/build-check-deploy-gradle-action@3.7.6
+        uses: DanySK/build-check-deploy-gradle-action@3.7.20
         with:
           pre-build-command: |
             echo -n "${{ secrets.DB_PASSWORD }}" > db-password.txt
@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v4.2.2
 
       - name: Generate coverage report
-        uses: DanySK/build-check-deploy-gradle-action@3.7.6
+        uses: DanySK/build-check-deploy-gradle-action@3.7.20
         with:
           pre-build-command: |
             echo -n "${{ secrets.DB_PASSWORD }}" > db-password.txt
@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build service ${{ matrix.service }}
-        uses: DanySK/build-check-deploy-gradle-action@3.7.6
+        uses: DanySK/build-check-deploy-gradle-action@3.7.20
         with:
           should-run-codecov: false
           build-command: |
