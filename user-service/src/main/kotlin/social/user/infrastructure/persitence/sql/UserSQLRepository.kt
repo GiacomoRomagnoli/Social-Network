@@ -5,6 +5,8 @@ import org.apache.logging.log4j.LogManager
 import social.user.application.UserRepository
 import social.user.domain.User
 import social.user.domain.UserID
+import social.user.infrastructure.persitence.sql.SQLUtils.prepareStatement
+import social.user.infrastructure.probes.SyncProbe
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
@@ -13,7 +15,7 @@ import java.sql.SQLIntegrityConstraintViolationException
 /**
  * SQL repository for users.
  */
-class UserSQLRepository : UserRepository {
+class UserSQLRepository : UserRepository, SyncProbe {
     private val logger = LogManager.getLogger(UserSQLRepository::class)
     private lateinit var connection: Connection
 
@@ -38,31 +40,34 @@ class UserSQLRepository : UserRepository {
     }
 
     override fun userCount(): Int {
-        val ps = SQLUtils.prepareStatement(connection, SQLOperation.USER_COUNT)
-        val rs = ps.executeQuery()
-        rs.next()
-        return rs.getInt(1)
+        prepareStatement(connection, SQLOperation.USER_COUNT).use { ps ->
+            ps.executeQuery().use {
+                return it.getInt(1)
+            }
+        }
     }
 
     /**
      * Find a user by ID.
      */
     override fun findById(id: UserID): User? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.SELECT_USER_BY_ID,
             id.value
-        )
-        val rs = ps.executeQuery()
-        return if (rs.next()) {
-            User.of(
-                rs.getString(SQLColumns.EMAIL),
-                rs.getString(SQLColumns.USERNAME),
-                rs.getBoolean(SQLColumns.ADMIN),
-                rs.getBoolean(SQLColumns.BLOCKED)
-            )
-        } else {
-            null
+        ).use { ps ->
+            ps.executeQuery().use {
+                return if (it.next()) {
+                    User.of(
+                        it.getString(SQLColumns.EMAIL),
+                        it.getString(SQLColumns.USERNAME),
+                        it.getBoolean(SQLColumns.ADMIN),
+                        it.getBoolean(SQLColumns.BLOCKED)
+                    )
+                } else {
+                    null
+                }
+            }
         }
     }
 
@@ -70,15 +75,14 @@ class UserSQLRepository : UserRepository {
      * Save a user into the database.
      */
     override fun save(entity: User) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.INSERT_USER,
             entity.email,
             entity.username,
             entity.isAdmin,
             entity.isBlocked
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 
     /**
@@ -86,16 +90,16 @@ class UserSQLRepository : UserRepository {
      */
     override fun deleteById(id: UserID): User? {
         val userToDelete = findById(id) ?: return null
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.DELETE_USER_BY_ID,
             id.value
-        )
-        val result = ps.executeUpdate()
-        return if (result > 0) {
-            userToDelete
-        } else {
-            null
+        ).use {
+            return if (it.executeUpdate() > 0) {
+                userToDelete
+            } else {
+                null
+            }
         }
     }
 
@@ -103,41 +107,49 @@ class UserSQLRepository : UserRepository {
      * Find all users.
      */
     override fun findAll(): Array<User> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.SELECT_ALL_USERS
-        )
-        val rs = ps.executeQuery()
-        val users = mutableListOf<User>()
-        while (rs.next()) {
-            users.add(
-                User.of(
-                    rs.getString(SQLColumns.EMAIL),
-                    rs.getString(SQLColumns.USERNAME),
-                    rs.getBoolean(SQLColumns.ADMIN),
-                    rs.getBoolean(SQLColumns.BLOCKED)
-                )
-            )
+        ).use { ps ->
+            ps.executeQuery().use {
+                val users = mutableListOf<User>()
+                while (it.next()) {
+                    users.add(
+                        User.of(
+                            it.getString(SQLColumns.EMAIL),
+                            it.getString(SQLColumns.USERNAME),
+                            it.getBoolean(SQLColumns.ADMIN),
+                            it.getBoolean(SQLColumns.BLOCKED)
+                        )
+                    )
+                }
+                return users.toTypedArray()
+            }
         }
-        return users.toTypedArray()
     }
 
     /**
      * Update a user.
      */
     override fun update(entity: User) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.UPDATE_USER,
             entity.username,
             entity.isAdmin,
             entity.isBlocked,
             entity.email
-        )
-        if (ps.executeUpdate() == 0) {
-            throw SQLIntegrityConstraintViolationException("no rows affected")
+        ).use { ps ->
+            if (ps.executeUpdate() == 0) {
+                throw SQLIntegrityConstraintViolationException("no rows affected")
+            }
         }
     }
+
+    override fun isReady(): Unit =
+        prepareStatement(connection, "SELECT 1").use { ps ->
+            ps.executeQuery().use { it.next() }
+        }
 }
 
 /**

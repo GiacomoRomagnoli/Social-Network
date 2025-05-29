@@ -15,6 +15,7 @@ import social.common.endpoint.StatusCode
 import social.user.application.UserService
 import social.user.domain.User
 import social.user.domain.UserID
+import social.user.infrastructure.probes.ReadinessProbe
 import social.user.infrastructure.serialization.jackson.Mapper
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
@@ -24,7 +25,10 @@ import java.util.concurrent.Callable
  * Verticle that exposes a REST API for users
  * @param service the user service
  */
-open class UserApiVerticle(protected val service: UserService) : AbstractVerticle() {
+open class UserApiVerticle(
+    protected val service: UserService,
+    private val readinessProbe: ReadinessProbe
+) : AbstractVerticle() {
     private val logger: Logger = LogManager.getLogger(this::class)
 
     /**
@@ -69,7 +73,11 @@ open class UserApiVerticle(protected val service: UserService) : AbstractVerticl
         router.get(Endpoint.HEALTH).handler { ctx ->
             sendResponse(ctx, StatusCode.OK)
         }
-
+        router.get(Endpoint.READY).handler { ctx ->
+            readinessProbe.isReady(vertx)
+                .onSuccess { sendResponse(ctx, StatusCode.OK) }
+                .onFailure { sendResponse(ctx, StatusCode.SERVICE_UNAVAILABLE) }
+        }
         router.get(Endpoint.USER_COUNT).handler(::getUserCount)
         router.post(Endpoint.USER).handler(::addUser)
         router.get(Endpoint.USER).handler(::getUser)

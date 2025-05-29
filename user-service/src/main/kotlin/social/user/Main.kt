@@ -12,6 +12,7 @@ import social.user.infrastructure.controller.rest.AuthApiDecorator
 import social.user.infrastructure.persitence.sql.CredentialsSQLRepository
 import social.user.infrastructure.persitence.sql.SQLUtils
 import social.user.infrastructure.persitence.sql.UserSQLRepository
+import social.user.infrastructure.probes.ReadinessProbe
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -55,7 +56,14 @@ fun main(args: Array<String>) {
         if (it.succeeded()) {
             val userService = UserServiceImpl(userRepository, producer)
             val authService = AuthServiceImpl(credentialsRepository, userRepository, producer)
-            val server = AuthApiDecorator(userService, authService)
+            val server = AuthApiDecorator(
+                userService,
+                authService,
+                ReadinessProbe(
+                    listOf(userRepository, credentialsRepository),
+                    listOf(producer)
+                )
+            )
             vertx.deployVerticle(server)
         } else {
             println("producer deployed with error: ${it.cause().message}")

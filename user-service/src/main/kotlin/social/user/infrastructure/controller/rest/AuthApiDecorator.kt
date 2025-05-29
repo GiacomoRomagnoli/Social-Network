@@ -7,13 +7,15 @@ import social.common.endpoint.StatusCode
 import social.user.application.AuthService
 import social.user.application.UserService
 import social.user.domain.Credentials
+import social.user.infrastructure.probes.ReadinessProbe
 import social.user.infrastructure.serialization.jackson.Mapper
 import java.util.concurrent.Callable
 
 class AuthApiDecorator(
     userService: UserService,
-    private val authService: AuthService
-) : UserApiVerticle(userService) {
+    private val authService: AuthService,
+    readinessProbe: ReadinessProbe
+) : UserApiVerticle(userService, readinessProbe) {
 
     override fun addEndPoints(router: Router) {
         super.addEndPoints(router)

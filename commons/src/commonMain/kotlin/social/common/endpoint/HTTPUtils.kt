@@ -17,6 +17,7 @@ object Endpoint {
     const val EMAIL_PARAM = "email"
     const val USER_EMAIL_PARAM = "$USER_USERS_PATH/:$EMAIL_PARAM"
     const val HEALTH = "/health"
+    const val READY = "/ready"
     const val USER = USER_USERS_PATH
     const val LOGIN = "/login"
     const val FRIENDSHIP = "$FRIENDSHIP_FRIENDS_PATH/friendships"

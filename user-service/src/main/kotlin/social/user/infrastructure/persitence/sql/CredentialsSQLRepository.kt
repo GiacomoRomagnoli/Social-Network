@@ -5,24 +5,28 @@ import social.user.domain.Credentials
 import social.user.domain.UserID
 import social.user.infrastructure.persitence.sql.SQLUtils.mySQLConnection
 import social.user.infrastructure.persitence.sql.SQLUtils.prepareStatement
+import social.user.infrastructure.probes.SyncProbe
 import java.sql.Connection
 
-class CredentialsSQLRepository(private val connection: Connection) : CredentialsRepository {
+class CredentialsSQLRepository(private val connection: Connection) : CredentialsRepository, SyncProbe {
     companion object {
         fun of(host: String, port: String, database: String, username: String, password: String) =
             CredentialsSQLRepository(mySQLConnection(host, port, database, username, password))
     }
 
     override fun findById(id: UserID): Credentials? {
-        val result = prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.SELECT_CREDENTIALS_BY_ID,
             id.value
-        ).executeQuery()
-        return if (result.next()) {
-            Credentials.fromHashed(result.getString(SQLColumns.USER_ID), result.getString(SQLColumns.PASSWORD))
-        } else {
-            null
+        ).use { ps ->
+            ps.executeQuery().use {
+                return if (it.next()) {
+                    Credentials.fromHashed(it.getString(SQLColumns.USER_ID), it.getString(SQLColumns.PASSWORD))
+                } else {
+                    null
+                }
+            }
         }
     }
 
@@ -33,7 +37,7 @@ class CredentialsSQLRepository(private val connection: Connection) : Credentials
             SQLOperation.INSERT_CREDENTIALS,
             credentials.id.value,
             credentials.password.value
-        ).executeUpdate()
+        ).use { it.executeUpdate() }
     }
 
     override fun deleteById(id: UserID): Credentials? {
@@ -43,26 +47,29 @@ class CredentialsSQLRepository(private val connection: Connection) : Credentials
                 connection,
                 SQLOperation.DELETE_CREDENTIALS_BY_ID,
                 id.value
-            ).executeUpdate()
+            ).use { it.executeUpdate() }
         }
         return result
     }
 
     override fun findAll(): Array<Credentials> {
-        val credentials = prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.SELECT_ALL_CREDENTIALS
-        ).executeQuery()
-        val result = mutableListOf<Credentials>()
-        while (credentials.next()) {
-            result.add(
-                Credentials.fromHashed(
-                    credentials.getString(SQLColumns.USER_ID),
-                    credentials.getString(SQLColumns.PASSWORD)
-                )
-            )
+        ).use { ps ->
+            ps.executeQuery().use {
+                val result = mutableListOf<Credentials>()
+                while (it.next()) {
+                    result.add(
+                        Credentials.fromHashed(
+                            it.getString(SQLColumns.USER_ID),
+                            it.getString(SQLColumns.PASSWORD)
+                        )
+                    )
+                }
+                return result.toTypedArray()
+            }
         }
-        return result.toTypedArray()
     }
 
     override fun update(entity: Credentials) {
@@ -72,6 +79,11 @@ class CredentialsSQLRepository(private val connection: Connection) : Credentials
             SQLOperation.UPDATE_CREDENTIALS,
             credentials.password.value,
             credentials.id.value
-        ).executeUpdate()
+        ).use { it.executeUpdate() }
     }
+
+    override fun isReady(): Unit =
+        prepareStatement(connection, "SELECT 1").use { ps ->
+            ps.executeQuery().use { it.next() }
+        }
 }
