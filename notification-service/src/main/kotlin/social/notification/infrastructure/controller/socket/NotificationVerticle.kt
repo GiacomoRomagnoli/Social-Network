@@ -5,13 +5,20 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.net.JksOptions
 import io.vertx.ext.web.Router
+import social.common.endpoint.Endpoint
 import social.common.endpoint.Port
 import social.common.endpoint.StatusCode
 
 class NotificationVerticle : AbstractVerticle() {
     override fun start() {
         val router = Router.router(vertx)
-        router.get("/health").handler { it.response().setStatusCode(StatusCode.OK).end() }
+        router.get(Endpoint.HEALTH).handler { it.response().setStatusCode(StatusCode.OK).end() }
+        router.get(Endpoint.READY).handler {
+            when (SocketHandlers.publicKey.get()) {
+                null -> it.response().setStatusCode(StatusCode.SERVICE_UNAVAILABLE).end()
+                else -> it.response().setStatusCode(StatusCode.OK).end()
+            }
+        }
         val server = vertx.createHttpServer(options())
         server.webSocketHandler(SocketHandlers::socketHandler).requestHandler(router).listen(Port.HTTP)
     }

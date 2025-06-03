@@ -21,7 +21,7 @@ class KafkaConsumerVerticle : AbstractVerticle() {
         "bootstrap.servers" to (System.getenv("KAFKA_HOST") ?: "localhost") + ":" + (System.getenv("KAFKA_PORT") ?: "9092"),
         "key.deserializer" to "org.apache.kafka.common.serialization.StringDeserializer",
         "value.deserializer" to "org.apache.kafka.common.serialization.StringDeserializer",
-        "group.id" to "notification-service",
+        "group.id" to (System.getenv("GROUP_ID") ?: "notification-service"),
         "auto.offset.reset" to "earliest"
     )
 
