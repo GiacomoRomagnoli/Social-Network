@@ -1,6 +1,7 @@
 package social.friendship.infrastructure.controller.event
 
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.core.Verticle
 import io.vertx.kafka.client.consumer.KafkaConsumer
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord
@@ -8,6 +9,7 @@ import org.apache.logging.log4j.LogManager
 import social.common.events.UserCreated
 import social.friendship.application.FriendshipService
 import social.friendship.domain.User
+import social.friendship.infrastructure.probes.AsyncProbe
 import social.friendship.social.friendship.infrastructure.serialization.jackson.Mapper
 import java.util.concurrent.Callable
 
@@ -20,7 +22,9 @@ interface KafkaConsumerVerticle : Verticle
  * Verticle that consumes events from Kafka
  * @param service the friendship service
  */
-class KafkaFriendshipConsumerVerticle(private val service: FriendshipService) : AbstractVerticle(), KafkaConsumerVerticle {
+class KafkaFriendshipConsumerVerticle(
+    private val service: FriendshipService
+) : AbstractVerticle(), KafkaConsumerVerticle, AsyncProbe {
     private val logger = LogManager.getLogger(this::class)
     private val consumerConfig = mapOf(
         "bootstrap.servers" to (System.getenv("KAFKA_HOST") ?: "localhost") + ":" + (System.getenv("KAFKA_PORT") ?: "9092"),
@@ -88,4 +92,7 @@ class KafkaFriendshipConsumerVerticle(private val service: FriendshipService) : 
             }
         }
     }
+
+    override fun isReady(): Future<Unit> =
+        consumer.partitionsFor("health-check").mapEmpty()
 }

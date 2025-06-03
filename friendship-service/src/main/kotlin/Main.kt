@@ -9,6 +9,7 @@ import social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepo
 import social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
 import social.friendship.infrastructure.persistence.sql.MessageSQLRepository
 import social.friendship.infrastructure.persistence.sql.UserSQLRepository
+import social.friendship.infrastructure.probes.ReadinessProbe
 
 fun main(args: Array<String>) {
     val vertx: Vertx = Vertx.vertx()
@@ -25,8 +26,14 @@ fun main(args: Array<String>) {
         messageRepository,
         producer,
     )
-    val api = RESTFriendshipAPIVerticleImpl(service)
     val consumer = KafkaFriendshipConsumerVerticle(service)
+    val api = RESTFriendshipAPIVerticleImpl(
+        service,
+        ReadinessProbe(
+            listOf(userRepository, friendshipRepository, friendshipRequestRepository, messageRepository),
+            listOf(producer, consumer)
+        )
+    )
     vertx.deployVerticle(producer).onSuccess {
         vertx.deployVerticle(consumer).onSuccess {
             vertx.deployVerticle(api)

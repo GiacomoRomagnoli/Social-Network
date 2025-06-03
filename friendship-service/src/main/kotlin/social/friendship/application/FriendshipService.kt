@@ -51,7 +51,7 @@ class FriendshipServiceImpl(
      * Connects to the MySQL database using the provided credentials or the default credentials given by the environment
      * variables.
      */
-    fun connectToDatabase() {
+    private fun connectToDatabase() {
         credentials?.let {
             connectToDatabaseWith(it)
         } ?: connectToDatabaseWithDefaultCredentials()

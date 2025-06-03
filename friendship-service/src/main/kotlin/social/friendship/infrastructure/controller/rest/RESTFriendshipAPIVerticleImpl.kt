@@ -18,6 +18,7 @@ import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.Message
 import social.friendship.domain.User
 import social.friendship.infrastructure.persistence.sql.SQLStateError
+import social.friendship.infrastructure.probes.ReadinessProbe
 import social.friendship.social.friendship.infrastructure.serialization.jackson.Mapper
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
@@ -34,7 +35,10 @@ interface RESTFriendshipAPIVerticle : Verticle
  * Verticle that exposes the REST API for the friendship service.
  * @param service the friendship service
  */
-class RESTFriendshipAPIVerticleImpl(private val service: FriendshipService) : AbstractVerticle(), RESTFriendshipAPIVerticle {
+class RESTFriendshipAPIVerticleImpl(
+    private val service: FriendshipService,
+    private val readinessProbe: ReadinessProbe
+) : AbstractVerticle(), RESTFriendshipAPIVerticle {
     private val logger: Logger = LogManager.getLogger(this::class)
 
     /**
@@ -111,6 +115,11 @@ class RESTFriendshipAPIVerticleImpl(private val service: FriendshipService) : Ab
 
         router.get(Endpoint.HEALTH).handler { ctx ->
             ctx.response().end("OK")
+        }
+        router.get(Endpoint.READY).handler { ctx ->
+            readinessProbe.isReady(vertx)
+                .onSuccess { sendResponse(ctx, StatusCode.OK) }
+                .onFailure { sendResponse(ctx, StatusCode.SERVICE_UNAVAILABLE) }
         }
 
         router.post(Endpoint.FRIENDSHIP).handler(::addFriendship)

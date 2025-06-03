@@ -2,12 +2,13 @@ package social.friendship.infrastructure.persistence.sql
 
 import org.apache.logging.log4j.LogManager
 import social.friendship.application.ConnectableRepository
+import social.friendship.infrastructure.probes.SyncProbe
 import java.sql.Connection
 
 /**
  * Abstract class to be extended by SQL repositories that need to connect to a database.
  */
-abstract class AbstractSQLRepository : ConnectableRepository {
+abstract class AbstractSQLRepository : ConnectableRepository, SyncProbe {
     protected lateinit var connection: Connection
     private val logger = LogManager.getLogger(this::class)
 
@@ -38,4 +39,11 @@ abstract class AbstractSQLRepository : ConnectableRepository {
         logger.trace("Closing connection to database")
         connection.close()
     }
+
+    override fun isReady(): Unit =
+        SQLUtils.prepareStatement(connection, "SELECT 1").use { ps ->
+            ps.executeQuery().use {
+                it.next()
+            }
+        }
 }

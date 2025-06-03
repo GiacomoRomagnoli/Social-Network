@@ -1,6 +1,7 @@
 package social.friendship.infrastructure.controller.event
 
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.kafka.client.producer.KafkaProducer
 import io.vertx.kafka.client.producer.KafkaProducerRecord
 import org.apache.logging.log4j.LogManager
@@ -11,12 +12,13 @@ import social.common.events.FriendshipRequestRejected
 import social.common.events.FriendshipRequestSent
 import social.common.events.MessageSent
 import social.friendship.application.KafkaProducerVerticle
+import social.friendship.infrastructure.probes.AsyncProbe
 import social.friendship.social.friendship.infrastructure.serialization.jackson.Mapper
 
 /**
  * Verticle that produces events to Kafka
  */
-class KafkaFriendshipProducerVerticle : AbstractVerticle(), KafkaProducerVerticle {
+class KafkaFriendshipProducerVerticle : AbstractVerticle(), KafkaProducerVerticle, AsyncProbe {
     private val logger = LogManager.getLogger(this::class)
     private val producerConfig = mapOf(
         "bootstrap.servers" to (System.getenv("KAFKA_HOST") ?: "localhost") + ":" + (System.getenv("KAFKA_PORT") ?: "9092"),
@@ -68,4 +70,7 @@ class KafkaFriendshipProducerVerticle : AbstractVerticle(), KafkaProducerVerticl
             logger.trace("Published event: TOPIC:{}, KEY:{}, VALUE:{}", topic, key, value)
         }
     }
+
+    override fun isReady(): Future<Unit> =
+        producer.partitionsFor("health-check").mapEmpty()
 }
