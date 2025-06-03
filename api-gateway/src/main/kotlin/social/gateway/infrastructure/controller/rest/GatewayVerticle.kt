@@ -38,6 +38,12 @@ open class GatewayVerticle : AbstractVerticle() {
             logger.trace("GET /health received")
             ctx.response().setStatusCode(StatusCode.OK).end()
         }
+        router.get(Endpoint.READY).handler {
+            when (AuthHandlers.publicKey.get()) {
+                null -> it.response().setStatusCode(StatusCode.SERVICE_UNAVAILABLE).end()
+                else -> it.response().setStatusCode(StatusCode.OK).end()
+            }
+        }
         // User
         router.post(Endpoint.LOGIN)
             .handler(handlerOf(UserHandlers::login, webClient))

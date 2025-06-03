@@ -19,7 +19,7 @@ class KafkaConsumerVerticle : AbstractVerticle() {
         "bootstrap.servers" to (System.getenv("KAFKA_HOST") ?: "localhost") + ":" + (System.getenv("KAFKA_PORT") ?: "9092"),
         "key.deserializer" to "org.apache.kafka.common.serialization.StringDeserializer",
         "value.deserializer" to "org.apache.kafka.common.serialization.StringDeserializer",
-        "group.id" to "friendship-service",
+        "group.id" to (System.getenv("GROUP_ID") ?: "api-gateway"),
         "auto.offset.reset" to "earliest"
     )
     private val mapper: ObjectMapper = jacksonObjectMapper().apply {
