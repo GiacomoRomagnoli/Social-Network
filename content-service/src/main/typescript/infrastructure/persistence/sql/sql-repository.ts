@@ -29,8 +29,13 @@ import {FriendshipRepository, PostRepository, UserRepository} from "../../../app
 import {social} from "../../../commons-lib";
 import {SqlErrors} from "./sql-errors";
 import ID = social.common.ddd.ID;
+import {Probe} from "../../probes";
 
-export class SqlPostRepository extends SqlErrors implements PostRepository {
+export class SqlPostRepository extends SqlErrors implements PostRepository, Probe {
+
+    async isReady() {
+        await this.connection!.execute<ResultSetHeader>("SELECT 1")
+    }
 
     private mapToPost(array: PostDTO[]) {
         return array.map(dto => postFrom(dto.userName, dto.author, dto.content, dto.id));
@@ -107,7 +112,11 @@ export class SqlPostRepository extends SqlErrors implements PostRepository {
     }
 }
 
-export class SqlUserRepository extends SqlErrors implements UserRepository {
+export class SqlUserRepository extends SqlErrors implements UserRepository, Probe {
+
+    async isReady() {
+        await this.connection!.execute<ResultSetHeader>("SELECT 1")
+    }
 
     private mapToUser(array: UserDTO[]): User[] {
         return array.map(dto => userOf(dto.userName, dto.email))
@@ -164,7 +173,11 @@ export class SqlUserRepository extends SqlErrors implements UserRepository {
     }
 }
 
-export class SqlFriendshipRepository extends SqlErrors implements FriendshipRepository {
+export class SqlFriendshipRepository extends SqlErrors implements FriendshipRepository, Probe {
+    async isReady() {
+        await this.connection!.execute<ResultSetHeader>("SELECT 1")
+    }
+
     private mapToFriendship(array: FriendshipDTO[]): Friendship[] {
         return array
             .map(dto => friendshipOf(userOf(dto.userName1, dto.user1), userOf(dto.userName2, dto.user2)))

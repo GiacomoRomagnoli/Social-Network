@@ -5,6 +5,8 @@ import UserCreated = social.common.events.UserCreated;
 import FriendshipRequestAccepted = social.common.events.FriendshipRequestAccepted;
 import {ContentService} from "../application/service";
 import {friendshipOf, userOf} from "../domain/domain";
+import {Probe} from "./probes";
+import {json} from "express";
 
 type Handler = (topic: string, json: any, service: ContentService) => Promise<void>;
 
@@ -31,15 +33,17 @@ const defaultHandler: Handler =
         }
     }
 
-export class KafkaConsumer {
+export class KafkaConsumer implements Probe {
     private readonly consumer;
     readonly emitter;
     private readonly service;
+    private readonly admin;
 
     constructor(kafka: Kafka, consumerConfig: ConsumerConfig, service: ContentService) {
         this.service = service;
         this.emitter = new EventEmitter();
         this.consumer = kafka.consumer(consumerConfig);
+        this.admin = kafka.admin()
     }
 
     async consume(subscription = defaultSubscription, handler = defaultHandler) {
@@ -58,6 +62,10 @@ export class KafkaConsumer {
 
     async stop() {
         this.consumer.disconnect();
+    }
+
+    async isReady() {
+        await this.admin.fetchTopicMetadata({ topics: [UserCreated.Companion.TOPIC] });
     }
 
 }

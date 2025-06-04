@@ -5,13 +5,22 @@ import {NoReferencedRowError} from "./persistence/sql/sql-errors";
 import {social} from "../commons-lib";
 import StatusCode = social.common.endpoint.StatusCode;
 import {UnableToDelete} from "../application/service-errors";
+import {Probe} from "./probes";
 
-export function getRouter(service: ContentService): Router {
+export function getRouter(service: ContentService, probes: Array<Probe>): Router {
     const router = Router();
 
     router.get("/health", (req: Request, res: Response) => {
         console.log("received health check request")
         res.status(StatusCode.OK).json("OK");
+    });
+
+    router.get("/ready", (req: Request, res: Response) => {
+        Promise.all(probes.map(p => p.isReady())).then(_ => {
+            res.status(StatusCode.OK).end();
+        }).catch( _ => {
+            res.status(StatusCode.SERVICE_UNAVAILABLE).end()
+        })
     });
 
     router.get("/contents/posts/:userID", async (req: Request, res: Response) => {
