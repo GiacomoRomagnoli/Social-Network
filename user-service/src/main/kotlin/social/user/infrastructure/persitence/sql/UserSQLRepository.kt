@@ -42,6 +42,7 @@ class UserSQLRepository : UserRepository, SyncProbe {
     override fun userCount(): Int {
         prepareStatement(connection, SQLOperation.USER_COUNT).use { ps ->
             ps.executeQuery().use {
+                it.next()
                 return it.getInt(1)
             }
         }
