@@ -5,7 +5,7 @@ set MYSQL_CLUSTER=mysql-cluster
 set MYSQL_OPERATOR=mysql-operator
 
 echo - Avvio Minikube...
-minikube start
+minikube start --memory=5927 --cpus=4
 
 echo - Aggiunta repo...
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -33,13 +33,13 @@ helm install %KAFKA% bitnami/kafka ^
   --set listeners.controller.protocol=PLAINTEXT
 
 echo - Installazione Operator...
-helm install %MYSQL_OPERATOR% mysql-operator/mysql-operator
+helm install %MYSQL_OPERATOR% mysql-operator/mysql-operator --wait
 
 echo - Installazione DB cluster...
 helm install %MYSQL_CLUSTER% mysql-operator/mysql-innodbcluster ^
-    --set credentials.root.user="root" ^
-    --set credentials.root.password="password" ^
-    --set credentials.root.host="%" ^
+    --set credentials.root.user=root ^
+    --set credentials.root.password=password ^
+    --set credentials.root.host=% ^
     --set serverInstances=3 ^
     --set routerInstances=1 ^
     --set tls.useSelfSigned=true

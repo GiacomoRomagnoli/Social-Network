@@ -12,6 +12,7 @@ helm uninstall %KAFKA% --namespace %NAMESPACE%
 
 echo - Disinstallazione MySQL cluster...
 helm uninstall %MYSQL_CLUSTER% --namespace %NAMESPACE%
+kubectl wait --for=delete pod -l app.kubernetes.io/managed-by=%MYSQL_OPERATOR% --namespace=%NAMESPACE% --timeout=600s
 
 echo - Disinstallazione Operator...
 helm uninstall %MYSQL_OPERATOR% --namespace %NAMESPACE%
@@ -21,5 +22,3 @@ kubectl delete namespace %NAMESPACE%
 
 echo - Arresto di Minikube...
 minikube stop
-
-pause
