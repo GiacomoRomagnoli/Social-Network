@@ -3,9 +3,11 @@ set NAMESPACE=social-network
 set KAFKA=kafka
 set MYSQL_CLUSTER=mysql-cluster
 set MYSQL_OPERATOR=mysql-operator
+set ROOT=root
+set PASSWORD=password
 
 echo - Avvio Minikube...
-minikube start --memory=5927 --cpus=4
+minikube start --memory=5926 --cpus=8
 
 echo - Aggiunta repo...
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -19,7 +21,7 @@ echo - Creazione namespace...
 kubectl create namespace %NAMESPACE%
 kubectl config set-context --current --namespace=%NAMESPACE%
 
-echo - Installazione Kafka in corso...
+echo - Installazione Kafka...
 helm install %KAFKA% bitnami/kafka ^
   --set replicaCount=3 ^
   --set configurationOverrides."auto.create.topics.enable"=true ^
@@ -36,10 +38,19 @@ echo - Installazione Operator...
 helm install %MYSQL_OPERATOR% mysql-operator/mysql-operator --wait
 
 echo - Installazione DB cluster...
-helm install %MYSQL_CLUSTER% mysql-operator/mysql-innodbcluster ^
-    --set credentials.root.user=root ^
-    --set credentials.root.password=password ^
+helm install %MYSQL_CLUSTER% mysql-operator/mysql-innodbcluster --wait ^
+    --set credentials.root.user=%ROOT% ^
+    --set credentials.root.password=%PASSWORD% ^
     --set credentials.root.host=% ^
     --set serverInstances=3 ^
     --set routerInstances=1 ^
     --set tls.useSelfSigned=true
+
+echo - Installazione Servizi...
+helm install user-service ./kubernetes/microservice ^
+    --set image.repository=giacomoromagnoli4/user-service ^
+    --set env.DB_HOST=%MYSQL_CLUSTER% ^
+    --set env.DB_PORT=6450 ^
+    --set env.MYSQL_DATABASE=user ^
+    --set env.MYSQL_USER=%ROOT% ^
+    --set env.MYSQL_PASSWORD=%PASSWORD%

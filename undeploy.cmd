@@ -17,6 +17,9 @@ kubectl wait --for=delete pod -l app.kubernetes.io/managed-by=%MYSQL_OPERATOR% -
 echo - Disinstallazione Operator...
 helm uninstall %MYSQL_OPERATOR% --namespace %NAMESPACE%
 
+echo -Disinstallazione Servizi...
+helm uninstall user-service --namespace %NAMESPACE%
+
 echo - Eliminazione namespace...
 kubectl delete namespace %NAMESPACE%
 
