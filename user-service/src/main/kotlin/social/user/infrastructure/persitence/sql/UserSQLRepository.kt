@@ -2,6 +2,7 @@ package social.user.infrastructure.persitence.sql
 
 import com.mysql.cj.jdbc.exceptions.CommunicationsException
 import org.apache.logging.log4j.LogManager
+import org.flywaydb.core.Flyway
 import social.user.application.UserRepository
 import social.user.domain.User
 import social.user.domain.UserID
@@ -190,5 +191,25 @@ object SQLUtils {
             logger.error("Failed to connect to database with URL: {}: {}", url, e)
             throw e
         }
+    }
+
+    fun migrate(
+        host: String,
+        port: String,
+        database: String,
+        username: String,
+        password: String,
+        resource: String
+    ) {
+        val url = "jdbc:mysql://$host:$port/$database"
+        DriverManager.getConnection("jdbc:mysql://$host:$port", username, password).use { connection ->
+            val stmt = connection.createStatement()
+            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS `$database`")
+        }
+        val flyway = Flyway.configure()
+            .dataSource(url, username, password)
+            .locations("classpath:$resource")
+            .load()
+        flyway.migrate()
     }
 }

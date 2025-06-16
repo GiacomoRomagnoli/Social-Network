@@ -28,23 +28,17 @@ private fun adminRegistration(
 
 fun main(args: Array<String>) {
     val vertx = Vertx.vertx()
+    val host = System.getenv("DB_HOST")
+    val port = System.getenv("DB_PORT")
+    val database = System.getenv("MYSQL_DATABASE")
+    val user = System.getenv("MYSQL_USER")
+    val migration = System.getenv("MYSQL_MIGRATION")?.toBoolean() ?: false
+    val password = System.getenv("MYSQL_PASSWORD")
+        ?: Files.readString(Paths.get("/run/secrets/db_password")).trim()
+    if (migration) SQLUtils.migrate(host, port, database, user, password, "db/migration")
     val userRepository = UserSQLRepository()
-    userRepository.connect(
-        System.getenv("DB_HOST"),
-        System.getenv("DB_PORT"),
-        System.getenv("MYSQL_DATABASE"),
-        System.getenv("MYSQL_USER"),
-        Files.readString(Paths.get("/run/secrets/db_password")).trim(),
-    )
-    val credentialsRepository = CredentialsSQLRepository(
-        SQLUtils.mySQLConnection(
-            System.getenv("DB_HOST"),
-            System.getenv("DB_PORT"),
-            System.getenv("MYSQL_DATABASE"),
-            System.getenv("MYSQL_USER"),
-            Files.readString(Paths.get("/run/secrets/db_password")).trim()
-        )
-    )
+    userRepository.connect(host, port, database, user, password)
+    val credentialsRepository = CredentialsSQLRepository.of(host, port, database, user, password)
     adminRegistration(
         User.of("admin@social.com", "admin", isAdmin = true),
         Credentials.of("admin@social.com", "AdminTest123!"),
