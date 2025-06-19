@@ -3,7 +3,7 @@ package social.friendship.infrastructure.persistence.sql
 import social.friendship.application.UserRepository
 import social.friendship.domain.User
 import social.friendship.domain.User.UserID
-import java.sql.PreparedStatement
+import social.friendship.infrastructure.persistence.sql.SQLUtils.prepareStatement
 
 /**
  * SQL repository for users.
@@ -15,16 +15,16 @@ class UserSQLRepository : UserRepository, AbstractSQLRepository() {
      * @return the user if found, null otherwise
      */
     override fun findById(id: UserID): User? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_USER_BY_ID,
             id.value
-        )
-        val result = ps.executeQuery()
-        return if (result.next()) {
-            User.of(result.getString(SQLColumns.UserTable.ID))
-        } else {
-            null
+        ).use { ps ->
+            ps.executeQuery().use {
+                return if (it.next())
+                    User.of(it.getString(SQLColumns.UserTable.ID))
+                else null
+            }
         }
     }
 
@@ -33,12 +33,11 @@ class UserSQLRepository : UserRepository, AbstractSQLRepository() {
      * @param entity the user to save
      */
     override fun save(entity: User) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.INSERT_USER,
             entity.id.value
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 
     /**
@@ -47,16 +46,14 @@ class UserSQLRepository : UserRepository, AbstractSQLRepository() {
      * @return the user if deleted, null otherwise
      */
     override fun deleteById(id: UserID): User? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.DELETE_USER_BY_ID,
             id.value
-        )
-        val result = ps.executeUpdate()
-        return if (result > 0) {
-            User.of(id)
-        } else {
-            null
+        ).use { ps ->
+            return if (ps.executeUpdate() > 0)
+                User.of(id)
+            else null
         }
     }
 
@@ -65,16 +62,18 @@ class UserSQLRepository : UserRepository, AbstractSQLRepository() {
      * @return the list of all users
      */
     override fun findAll(): Array<User> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_ALL_USERS
-        )
-        val result = ps.executeQuery()
-        val users = mutableListOf<User>()
-        while (result.next()) {
-            users.add(User.of(result.getString(SQLColumns.UserTable.ID)))
+        ).use { ps ->
+            ps.executeQuery().use {
+                val users = mutableListOf<User>()
+                while (it.next()) {
+                    users.add(User.of(it.getString(SQLColumns.UserTable.ID)))
+                }
+                return users.toTypedArray()
+            }
         }
-        return users.toTypedArray()
     }
 
     /**
@@ -82,12 +81,11 @@ class UserSQLRepository : UserRepository, AbstractSQLRepository() {
      * @param entity the user to update
      */
     override fun update(entity: User) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.UPDATE_USER,
             entity.id.value,
             entity.id.value
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 }

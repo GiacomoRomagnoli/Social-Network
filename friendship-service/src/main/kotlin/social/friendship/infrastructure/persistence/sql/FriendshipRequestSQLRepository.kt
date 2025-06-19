@@ -5,7 +5,7 @@ import social.friendship.application.FriendshipRequestRepository
 import social.friendship.domain.FriendshipRequest
 import social.friendship.domain.FriendshipRequest.FriendshipRequestID
 import social.friendship.domain.User
-import java.sql.PreparedStatement
+import social.friendship.infrastructure.persistence.sql.SQLUtils.prepareStatement
 
 /**
  * SQL repository for friendship requests.
@@ -19,17 +19,20 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
      * @return the friendship request if found, null otherwise
      */
     override fun findById(id: FriendshipRequestID): FriendshipRequest? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_FRIENDSHIP_REQUEST_BY_ID,
             id.to.value,
             id.from.value
-        )
-        val result = ps.executeQuery()
-        return if (result.next()) {
-            FriendshipRequest.of(User.of(result.getString(SQLColumns.FriendshipRequestTable.TO)), User.of(result.getString(SQLColumns.FriendshipRequestTable.FROM)))
-        } else {
-            null
+        ).use { ps ->
+            ps.executeQuery().use {
+                return if (it.next())
+                    FriendshipRequest.of(
+                        User.of(it.getString(SQLColumns.FriendshipRequestTable.TO)),
+                        User.of(it.getString(SQLColumns.FriendshipRequestTable.FROM))
+                    )
+                else null
+            }
         }
     }
 
@@ -38,13 +41,12 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
      * @param entity the friendship request to save
      */
     override fun save(entity: FriendshipRequest) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.INSERT_FRIENDSHIP_REQUEST,
             entity.to.id.value,
             entity.from.id.value
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 
     /**
@@ -53,17 +55,15 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
      * @return the deleted friendship request if found, null otherwise
      */
     override fun deleteById(id: FriendshipRequestID): FriendshipRequest? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.DELETE_FRIENDSHIP_REQUEST_BY_ID,
             id.to.value,
             id.from.value
-        )
-        val result = ps.executeUpdate()
-        return if (result > 0) {
-            FriendshipRequest.of(User.of(id.to), User.of(id.from))
-        } else {
-            null
+        ).use {
+            return if (it.executeUpdate() > 0)
+                FriendshipRequest.of(User.of(id.to), User.of(id.from))
+            else null
         }
     }
 
@@ -72,16 +72,20 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
      * @return all friendship requests
      */
     override fun findAll(): Array<FriendshipRequest> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
-            connection,
-            SQLOperation.Query.SELECT_ALL_FRIENDSHIP_REQUESTS
-        )
-        val result = ps.executeQuery()
-        val friendshipRequests = mutableListOf<FriendshipRequest>()
-        while (result.next()) {
-            friendshipRequests.add(FriendshipRequest.of(User.of(result.getString(SQLColumns.FriendshipRequestTable.TO)), User.of(result.getString(SQLColumns.FriendshipRequestTable.FROM))))
+        prepareStatement(connection, SQLOperation.Query.SELECT_ALL_FRIENDSHIP_REQUESTS).use { ps ->
+            ps.executeQuery().use {
+                val fr = mutableListOf<FriendshipRequest>()
+                while (it.next()) {
+                    fr.add(
+                        FriendshipRequest.of(
+                            User.of(it.getString(SQLColumns.FriendshipRequestTable.TO)),
+                            User.of(it.getString(SQLColumns.FriendshipRequestTable.FROM))
+                        )
+                    )
+                }
+                return fr.toTypedArray()
+            }
         }
-        return friendshipRequests.toTypedArray()
     }
 
     /**
@@ -90,21 +94,25 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
      * @return all friendship requests of the user
      */
     override fun getAllFriendshipRequestsOf(userId: User.UserID): Iterable<FriendshipRequest> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_FRIENDSHIP_REQUESTS_OF_USER,
             userId.value,
             userId.value,
-        )
-        val result = ps.executeQuery()
-        val friendshipRequests = mutableListOf<FriendshipRequest>()
-        while (result.next()) {
-            val userTo = User.of(result.getString(SQLColumns.FriendshipRequestTable.TO))
-            val userFrom = User.of(result.getString(SQLColumns.FriendshipRequestTable.FROM))
-            val friendshipRequest = FriendshipRequest.of(userTo, userFrom)
-            friendshipRequests.add(friendshipRequest)
+        ).use { ps ->
+            ps.executeQuery().use {
+                val fr = mutableListOf<FriendshipRequest>()
+                while (it.next()) {
+                    fr.add(
+                        FriendshipRequest.of(
+                            User.of(it.getString(SQLColumns.FriendshipRequestTable.TO)),
+                            User.of(it.getString(SQLColumns.FriendshipRequestTable.FROM))
+                        )
+                    )
+                }
+                return fr.toList()
+            }
         }
-        return friendshipRequests.toList()
     }
 
     /**
@@ -112,14 +120,13 @@ class FriendshipRequestSQLRepository : FriendshipRequestRepository, AbstractSQLR
      * @param entity the friendship request to update
      */
     override fun update(entity: FriendshipRequest) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.UPDATE_FRIENDSHIP_REQUEST,
             entity.to.id.value,
             entity.from.id.value,
             entity.to.id.value,
             entity.from.id.value
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 }

@@ -89,7 +89,8 @@ class FriendshipServiceImpl(
         val port = System.getenv("DB_PORT")
         val dbName = System.getenv("MYSQL_DATABASE")
         val username = System.getenv("MYSQL_USER")
-        val password = Files.readString(Paths.get("/run/secrets/db_password")).trim()
+        val password = System.getenv("MYSQL_PASSWORD")
+            ?: Files.readString(Paths.get("/run/secrets/db_password")).trim()
 
         connectToDatabaseWith(host, port, dbName, username, password)
     }

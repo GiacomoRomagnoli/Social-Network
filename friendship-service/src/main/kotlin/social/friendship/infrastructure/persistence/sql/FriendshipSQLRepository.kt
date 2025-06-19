@@ -4,7 +4,7 @@ import social.friendship.application.FriendshipRepository
 import social.friendship.domain.Friendship
 import social.friendship.domain.Friendship.FriendshipID
 import social.friendship.domain.User
-import java.sql.PreparedStatement
+import social.friendship.infrastructure.persistence.sql.SQLUtils.prepareStatement
 
 /**
  * SQL implementation of the FriendshipRepository.
@@ -16,17 +16,20 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
      * @return the friendship if found, null otherwise
      */
     override fun findById(id: FriendshipID): Friendship? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_FRIENDSHIP_BY_ID,
             id.user1.value,
             id.user2.value
-        )
-        val result = ps.executeQuery()
-        return if (result.next()) {
-            Friendship.of(User.of(result.getString(SQLColumns.FriendshipTable.USER_1)), User.of(result.getString(SQLColumns.FriendshipTable.USER_2)))
-        } else {
-            null
+        ).use { ps ->
+            ps.executeQuery().use {
+                return if (it.next())
+                    Friendship.of(
+                        User.of(it.getString(SQLColumns.FriendshipTable.USER_1)),
+                        User.of(it.getString(SQLColumns.FriendshipTable.USER_2))
+                    )
+                else null
+            }
         }
     }
 
@@ -35,13 +38,12 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
      * @param entity the friendship to save
      */
     override fun save(entity: Friendship) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.INSERT_FRIENDSHIP,
             entity.user1.id.value,
             entity.user2.id.value
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 
     /**
@@ -50,17 +52,15 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
      * @return the deleted friendship if found, null otherwise
      */
     override fun deleteById(id: FriendshipID): Friendship? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.DELETE_FRIENDSHIP_BY_ID,
             id.user1.value,
             id.user2.value
-        )
-        val result = ps.executeUpdate()
-        return if (result > 0) {
-            Friendship.of(User.of(id.user1), User.of(id.user2))
-        } else {
-            null
+        ).use { ps ->
+            return if (ps.executeUpdate() > 0)
+                Friendship.of(User.of(id.user1), User.of(id.user2))
+            else null
         }
     }
 
@@ -69,16 +69,23 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
      * @return all friendships
      */
     override fun findAll(): Array<Friendship> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_ALL_FRIENDSHIPS
-        )
-        val result = ps.executeQuery()
-        val friendships = mutableListOf<Friendship>()
-        while (result.next()) {
-            friendships.add(Friendship.of(User.of((result.getString(SQLColumns.FriendshipTable.USER_1))), User.of((result.getString(SQLColumns.FriendshipTable.USER_2)))))
+        ).use { ps ->
+            ps.executeQuery().use {
+                val friendships = mutableListOf<Friendship>()
+                while (it.next()) {
+                    friendships.add(
+                        Friendship.of(
+                            User.of(it.getString(SQLColumns.FriendshipTable.USER_1)),
+                            User.of(it.getString(SQLColumns.FriendshipTable.USER_2))
+                        )
+                    )
+                }
+                return friendships.toTypedArray()
+            }
         }
-        return friendships.toTypedArray()
     }
 
     /**
@@ -87,23 +94,25 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
      * @return all friendships of the user
      */
     override fun findAllFriendsOf(userID: User.UserID): Iterable<User> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_FRIENDSHIPS_OF_USER,
             userID.value,
             userID.value
-        )
-        val result = ps.executeQuery()
-        val friends = mutableListOf<User>()
-        while (result.next()) {
-            val users = listOf(
-                User.of(result.getString(SQLColumns.FriendshipTable.USER_1)),
-                User.of(result.getString(SQLColumns.FriendshipTable.USER_2))
-            )
-            users.filter { it.id != userID }
-                .forEach { friends.add(it) }
+        ).use { ps ->
+            ps.executeQuery().use {
+                val friends = mutableListOf<User>()
+                while (it.next()) {
+                    val users = listOf(
+                        User.of(it.getString(SQLColumns.FriendshipTable.USER_1)),
+                        User.of(it.getString(SQLColumns.FriendshipTable.USER_2))
+                    )
+                    users.filter { u -> u.id != userID }
+                        .forEach { f -> friends.add(f) }
+                }
+                return friends.toList()
+            }
         }
-        return friends.toList()
     }
 
     /**
@@ -111,14 +120,13 @@ class FriendshipSQLRepository : FriendshipRepository, AbstractSQLRepository() {
      * @param entity the friendship to update
      */
     override fun update(entity: Friendship) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.UPDATE_FRIENDSHIP,
             entity.user1.id.value,
             entity.user2.id.value,
             entity.user1.id.value,
             entity.user2.id.value
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 }

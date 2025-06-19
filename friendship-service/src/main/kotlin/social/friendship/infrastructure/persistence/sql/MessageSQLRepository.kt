@@ -4,7 +4,7 @@ import social.friendship.application.MessageRepository
 import social.friendship.domain.Message
 import social.friendship.domain.Message.MessageID
 import social.friendship.domain.User
-import java.sql.PreparedStatement
+import social.friendship.infrastructure.persistence.sql.SQLUtils.prepareStatement
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 import java.sql.Timestamp
@@ -21,22 +21,22 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
      * @return the message if found, null otherwise
      */
     override fun findById(id: MessageID): Message? {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_MESSAGE_BY_ID,
             id.value.toString()
-        )
-        val result = ps.executeQuery()
-        return if (result.next()) {
-            Message.of(
-                UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
-                User.of(result.getString(SQLColumns.MessageTable.SENDER)),
-                User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                result.getString(SQLColumns.MessageTable.CONTENT),
-                result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
-            )
-        } else {
-            null
+        ).use { ps ->
+            ps.executeQuery().use {
+                return if (it.next())
+                    Message.of(
+                        UUID.fromString(it.getString(SQLColumns.MessageTable.ID)),
+                        User.of(it.getString(SQLColumns.MessageTable.SENDER)),
+                        User.of(it.getString(SQLColumns.MessageTable.RECEIVER)),
+                        it.getString(SQLColumns.MessageTable.CONTENT),
+                        it.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
+                    )
+                else null
+            }
         }
     }
 
@@ -45,7 +45,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
      * @param entity the message to save
      */
     override fun save(entity: Message) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.INSERT_MESSAGE,
             entity.id.value.toString(),
@@ -53,8 +53,7 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
             entity.receiver.id.value,
             entity.content,
             Timestamp.from(entity.timestamp)
-        )
-        ps.executeUpdate()
+        ).use { it.executeUpdate() }
     }
 
     /**
@@ -67,20 +66,18 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
         try {
             val messageToDelete = findById(id) ?: return null
 
-            val ps: PreparedStatement = SQLUtils.prepareStatement(
+            prepareStatement(
                 connection,
                 SQLOperation.Update.DELETE_MESSAGE_BY_ID,
                 id.value.toString()
-            )
-
-            val result = ps.executeUpdate()
-
-            return if (result > 0) {
-                connection.commit()
-                messageToDelete
-            } else {
-                connection.rollback()
-                null
+            ).use {
+                return if (it.executeUpdate() > 0) {
+                    connection.commit()
+                    messageToDelete
+                } else {
+                    connection.rollback()
+                    null
+                }
             }
         } catch (e: SQLException) {
             connection.rollback()
@@ -95,24 +92,26 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
      * @return all messages
      */
     override fun findAll(): Array<Message> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_ALL_MESSAGES
-        )
-        val result = ps.executeQuery()
-        val messages = mutableListOf<Message>()
-        while (result.next()) {
-            messages.add(
-                Message.of(
-                    UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
-                    User.of(result.getString(SQLColumns.MessageTable.SENDER)),
-                    User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                    result.getString(SQLColumns.MessageTable.CONTENT),
-                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
-                )
-            )
+        ).use { ps ->
+            ps.executeQuery().use {
+                val messages = mutableListOf<Message>()
+                while (it.next()) {
+                    messages.add(
+                        Message.of(
+                            UUID.fromString(it.getString(SQLColumns.MessageTable.ID)),
+                            User.of(it.getString(SQLColumns.MessageTable.SENDER)),
+                            User.of(it.getString(SQLColumns.MessageTable.RECEIVER)),
+                            it.getString(SQLColumns.MessageTable.CONTENT),
+                            it.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
+                        )
+                    )
+                }
+                return messages.toTypedArray()
+            }
         }
-        return messages.toTypedArray()
     }
 
     /**
@@ -121,25 +120,27 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
      * @return all messages received by the user
      */
     override fun findAllMessagesReceivedBy(userID: User.UserID): Iterable<Message> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_MESSAGES_RECEIVED_BY_USER,
             userID.value
-        )
-        val result = ps.executeQuery()
-        val messages = mutableListOf<Message>()
-        while (result.next()) {
-            messages.add(
-                Message.of(
-                    UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
-                    User.of(result.getString(SQLColumns.MessageTable.SENDER)),
-                    User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                    result.getString(SQLColumns.MessageTable.CONTENT),
-                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
-                )
-            )
+        ).use { ps ->
+            ps.executeQuery().use {
+                val messages = mutableListOf<Message>()
+                while (it.next()) {
+                    messages.add(
+                        Message.of(
+                            UUID.fromString(it.getString(SQLColumns.MessageTable.ID)),
+                            User.of(it.getString(SQLColumns.MessageTable.SENDER)),
+                            User.of(it.getString(SQLColumns.MessageTable.RECEIVER)),
+                            it.getString(SQLColumns.MessageTable.CONTENT),
+                            it.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
+                        )
+                    )
+                }
+                return messages
+            }
         }
-        return messages
     }
 
     /**
@@ -152,28 +153,30 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
         user1: User.UserID,
         user2: User.UserID
     ): Iterable<Message> {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Query.SELECT_MESSAGES_EXCHANGED_BETWEEN_USERS,
             user1.value,
             user2.value,
             user2.value,
             user1.value
-        )
-        val result = ps.executeQuery()
-        val messages = mutableListOf<Message>()
-        while (result.next()) {
-            messages.add(
-                Message.of(
-                    UUID.fromString(result.getString(SQLColumns.MessageTable.ID)),
-                    User.of(result.getString(SQLColumns.MessageTable.SENDER)),
-                    User.of(result.getString(SQLColumns.MessageTable.RECEIVER)),
-                    result.getString(SQLColumns.MessageTable.CONTENT),
-                    result.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
-                )
-            )
+        ).use { ps ->
+            ps.executeQuery().use {
+                val messages = mutableListOf<Message>()
+                while (it.next()) {
+                    messages.add(
+                        Message.of(
+                            UUID.fromString(it.getString(SQLColumns.MessageTable.ID)),
+                            User.of(it.getString(SQLColumns.MessageTable.SENDER)),
+                            User.of(it.getString(SQLColumns.MessageTable.RECEIVER)),
+                            it.getString(SQLColumns.MessageTable.CONTENT),
+                            it.getTimestamp(SQLColumns.MessageTable.TIMESTAMP).toInstant()
+                        )
+                    )
+                }
+                return messages
+            }
         }
-        return messages
     }
 
     /**
@@ -181,14 +184,15 @@ class MessageSQLRepository : MessageRepository, AbstractSQLRepository() {
      * @param entity the message to update
      */
     override fun update(entity: Message) {
-        val ps: PreparedStatement = SQLUtils.prepareStatement(
+        prepareStatement(
             connection,
             SQLOperation.Update.UPDATE_MESSAGE,
             entity.content,
             entity.id.value.toString(),
-        )
-        if (ps.executeUpdate() == 0) {
-            throw SQLIntegrityConstraintViolationException("no rows affected")
+        ).use {
+            if (it.executeUpdate() == 0) {
+                throw SQLIntegrityConstraintViolationException("no rows affected")
+            }
         }
     }
 }
