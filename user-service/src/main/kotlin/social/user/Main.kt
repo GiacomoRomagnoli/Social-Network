@@ -10,7 +10,6 @@ import social.user.domain.User
 import social.user.infrastructure.controller.event.KafkaUserProducerVerticle
 import social.user.infrastructure.controller.rest.AuthApiDecorator
 import social.user.infrastructure.persitence.sql.CredentialsSQLRepository
-import social.user.infrastructure.persitence.sql.SQLUtils
 import social.user.infrastructure.persitence.sql.UserSQLRepository
 import social.user.infrastructure.probes.ReadinessProbe
 import java.nio.file.Files
@@ -32,10 +31,8 @@ fun main(args: Array<String>) {
     val port = System.getenv("DB_PORT")
     val database = System.getenv("MYSQL_DATABASE")
     val user = System.getenv("MYSQL_USER")
-    val migration = System.getenv("MYSQL_MIGRATION")?.toBoolean() ?: false
     val password = System.getenv("MYSQL_PASSWORD")
         ?: Files.readString(Paths.get("/run/secrets/db_password")).trim()
-    if (migration) SQLUtils.migrate(host, port, database, user, password, "db/migration")
     val userRepository = UserSQLRepository()
     userRepository.connect(host, port, database, user, password)
     val credentialsRepository = CredentialsSQLRepository.of(host, port, database, user, password)

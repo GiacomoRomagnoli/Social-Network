@@ -16,7 +16,6 @@ task-tree-version = "4.0.0"
 bcrypt-version = "0.4"
 jjwt = "0.12.6"
 micrometer = "1.12.3"
-flyway = "10.0.0"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -41,7 +40,6 @@ bcrypt = { module = "org.mindrot:jbcrypt", version.ref = "bcrypt-version" }
 jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
-flyway-core = {module = "org.flywaydb:flyway-core", version.ref = "flyway"}
 
 [bundles]
 kotlin-testing = [ "kotest-junit5-jvm", "kotest-assertions-core-jvm", "mockito-core" ]

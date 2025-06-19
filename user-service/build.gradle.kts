@@ -27,7 +27,6 @@ dependencies {
     implementation(libs.mysql.connector.java)
     implementation(project(":commons"))
     implementation(project(":utils"))
-    implementation(libs.flyway.core)
     testImplementation(kotlin("test"))
     testImplementation(libs.archunit)
     testImplementation(libs.mockito.core)
