@@ -1,0 +1,14 @@
+CREATE TABLE user
+(
+    email VARCHAR(255) NOT NULL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+        admin BIT(1) NOT NULL DEFAULT 0,
+    blocked BIT(1) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE credentials
+(
+    user_id VARCHAR(255) NOT NULL PRIMARY KEY,
+    password VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(email) ON DELETE CASCADE
+);

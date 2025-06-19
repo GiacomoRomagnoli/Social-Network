@@ -5,6 +5,7 @@ set MYSQL_CLUSTER=mysql-cluster
 set MYSQL_OPERATOR=mysql-operator
 set ROOT=root
 set PASSWORD=password
+set USER_SERVICE=user-service
 
 echo - Avvio Minikube...
 minikube start --memory=5926 --cpus=8
@@ -38,19 +39,13 @@ echo - Installazione Operator...
 helm install %MYSQL_OPERATOR% mysql-operator/mysql-operator --wait
 
 echo - Installazione DB cluster...
-helm install %MYSQL_CLUSTER% mysql-operator/mysql-innodbcluster --wait ^
+helm install %MYSQL_CLUSTER% mysql-operator/mysql-innodbcluster ^
     --set credentials.root.user=%ROOT% ^
     --set credentials.root.password=%PASSWORD% ^
     --set credentials.root.host=% ^
-    --set serverInstances=3 ^
+    --set serverInstances=2 ^
     --set routerInstances=1 ^
     --set tls.useSelfSigned=true
 
 echo - Installazione Servizi...
-helm install user-service ./kubernetes/microservice ^
-    --set image.repository=giacomoromagnoli4/user-service ^
-    --set env.DB_HOST=%MYSQL_CLUSTER% ^
-    --set env.DB_PORT=6450 ^
-    --set env.MYSQL_DATABASE=user ^
-    --set env.MYSQL_USER=%ROOT% ^
-    --set env.MYSQL_PASSWORD=%PASSWORD%
+helm install %USER_SERVICE% ./kubernetes/microservice --set serviceType=%USER_SERVICE%

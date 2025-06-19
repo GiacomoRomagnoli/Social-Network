@@ -15,9 +15,25 @@ spec:
     metadata:
       labels: {{- include "microservice.selectorLabels" . | nindent 8 }}
     spec:
+      initContainers:
+        - name: init-db
+          image: mysql:8
+          command: [ "/bin/sh", "/init-scripts/init-migrate.sh" ]
+          volumeMounts:
+            - name: init-script-volume
+              mountPath: /init-scripts
+            - name: migration-sql-volume
+              mountPath: /migrations
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ required "Missing required value: image.repository" .Values.image.repository }}:{{ .Values.image.tag }}"
+        - name: {{ required "Missing required value: serviceType" .Values.serviceType }}
+          image: {{ index .Values.images .Values.serviceType | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
@@ -38,4 +54,12 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: init-script-volume
+          configMap:
+            name: {{ include "microservice.fullname" . }}-init-script
+            defaultMode: 0755
+        - name: migration-sql-volume
+          configMap:
+            name: {{ include "microservice.fullname" . }}-db-migrations
 

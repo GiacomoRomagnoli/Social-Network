@@ -3,19 +3,30 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
+migrationFile: files/migrations/*.sql
+serviceType: ""
+resources: {}
+
+images:
+  user-service: giacomoromagnoli4/user-service:latest
+  friendship-service: giacomoromagnoli4/friendship-service:latest
+  content-service: giacomoromagnoli4/content-service:latest
+
+databaseNames:
+  user-service: user
+  friendship-service: friendship
+  content-service: content
 
 image:
-  repository: ""
   pullPolicy: IfNotPresent
-  tag: latest
 
 env:
-  DB_HOST: ""
-  DB_PORT: ""
-  MYSQL_DATABASE: ""
-  MYSQL_MIGRATION: true
-  MYSQL_USER: ""
-  MYSQL_PASSWORD: ""
+  DB_HOST: mysql-cluster
+  DB_PORT: 3306
+  MYSQL_USER: root
+  MYSQL_PASSWORD: password
+  KAFKA_HOST: kafka
+  KAFKA_PORT: 9092
 
 service:
   type: ClusterIP

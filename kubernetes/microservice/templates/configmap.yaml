@@ -5,9 +5,51 @@ metadata:
   labels:
     {{- include "microservice.labels" . | nindent 4 }}
 data:
+  MYSQL_DATABASE: {{ index .Values.databaseNames .Values.serviceType }}
   {{- range $key, $val := .Values.env }}
-  {{- if $val }}
+    {{- if and $val (ne $key "MYSQL_DATABASE") }}
   {{ $key }}: "{{ $val }}"
+    {{- end }}
   {{- end }}
-  {{- end }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "microservice.fullname" . }}-init-script
+data:
+  init-migrate.sh: |-
+    #!/bin/sh
+    set -e
+
+    echo "Waiting for database to be available..."
+
+    until mysqladmin ping -h "{{ .Values.env.DB_HOST }}" -P "{{ .Values.env.DB_PORT }}" --silent; do
+      echo "Database not ready yet, waiting..."
+      sleep 5
+    done
+
+    echo "Database is up! Creating database if it does not exist..."
+
+    mysql -h "{{ .Values.env.DB_HOST }}" -P "{{ .Values.env.DB_PORT }}" -u "{{ .Values.env.MYSQL_USER }}" -p"{{ .Values.env.MYSQL_PASSWORD }}" -e "CREATE DATABASE IF NOT EXISTS \`{{ index .Values.databaseNames .Values.serviceType }}\`;"
+
+    echo "Running migrations..."
+
+    mysql -h "{{ .Values.env.DB_HOST }}" -P "{{ .Values.env.DB_PORT }}" -u "{{ .Values.env.MYSQL_USER }}" -p"{{ .Values.env.MYSQL_PASSWORD }}" "{{ index .Values.databaseNames .Values.serviceType }}" < /migrations/init.sql
+
+    echo "Migrations applied successfully."
+
+
+---
+
+{{- $file := printf "files/migrations/%s.sql" .Values.serviceType }}
+{{- $content := .Files.Get $file }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "microservice.fullname" . }}-db-migrations
+data:
+  init.sql: |-
+{{ $content | indent 4 }}
 
