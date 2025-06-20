@@ -43,6 +43,6 @@ export function getConfiguration() : ConnectionOptions {
         port: +(process.env.DB_PORT || "3306"),
         database: process.env.MYSQL_DATABASE || "content",
         user: process.env.MYSQL_USER || "root",
-        password: process.env.MYSQL_PASSWORD || readPwdFromFile()
+        password: process.env.MYSQL_PASSWORD !== undefined ? process.env.MYSQL_PASSWORD : readPwdFromFile()
     }
 }
