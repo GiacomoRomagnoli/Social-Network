@@ -2,7 +2,6 @@ import {Server, DefaultMiddlewares} from "./infrastructure/api"
 import {getRouter} from "./infrastructure/router"
 import {ContentServiceImpl} from "./application/service";
 import {SqlFriendshipRepository, SqlPostRepository, SqlUserRepository} from "./infrastructure/persistence/sql/sql-repository";
-import {FriendshipRepository, PostRepository, UserRepository} from "./application/repository";
 import {KafkaConsumer} from "./infrastructure/kafka";
 import {Kafka} from "kafkajs";
 
