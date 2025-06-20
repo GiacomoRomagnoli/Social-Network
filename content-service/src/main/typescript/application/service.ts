@@ -38,8 +38,8 @@ export class ContentServiceImpl implements ContentService {
         this.userRepository = userRepository;
     }
 
-    async init(port: number) {
-        const config = getConfiguration(port);
+    async init() {
+        const config = getConfiguration();
         await this.friendshipRepository.connect(config);
         await this.postRepository.connect(config);
         await this.userRepository.connect(config);

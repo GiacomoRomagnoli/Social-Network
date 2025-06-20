@@ -10,7 +10,7 @@ const userRepository = new SqlUserRepository();
 const postRepository = new SqlPostRepository();
 const friendshipRepository = new SqlFriendshipRepository();
 const service = new ContentServiceImpl(friendshipRepository, postRepository,userRepository);
-service.init(3306).then(() => {
+service.init().then(() => {
     const kafka = new Kafka({
         clientId: "content-service",
         brokers: [`${process.env.KAFKA_HOST || 'localhost'}:${process.env.KAFKA_PORT || '9092'}`],
