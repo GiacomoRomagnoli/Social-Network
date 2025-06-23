@@ -6,6 +6,8 @@ set MYSQL_OPERATOR=mysql-operator
 set ROOT=root
 set PASSWORD=password
 set USER_SERVICE=user-service
+set CONTENT_SERVICE=content-service
+set FRIENDSHIP_SERVICE=friendship-service
 
 echo - Avvio Minikube...
 minikube start --memory=5926 --cpus=8
@@ -49,3 +51,5 @@ helm install %MYSQL_CLUSTER% mysql-operator/mysql-innodbcluster ^
 
 echo - Installazione Servizi...
 helm install %USER_SERVICE% ./kubernetes/microservice --set serviceType=%USER_SERVICE%
+helm install %FRIENDSHIP_SERVICE% ./kubernetes/microservice --set serviceType=%FRIENDSHIP_SERVICE%
+helm install %CONTENT_SERVICE% ./kubernetes/microservice --set serviceType=%CONTENT_SERVICE%

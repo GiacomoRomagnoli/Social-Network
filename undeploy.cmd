@@ -19,6 +19,8 @@ helm uninstall %MYSQL_OPERATOR% --namespace %NAMESPACE%
 
 echo -Disinstallazione Servizi...
 helm uninstall user-service --namespace %NAMESPACE%
+helm uninstall friendship-service --namespace %NAMESPACE%
+helm uninstall content-service --namespace %NAMESPACE%
 
 echo - Eliminazione namespace...
 kubectl delete namespace %NAMESPACE%
