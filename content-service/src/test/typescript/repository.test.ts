@@ -19,7 +19,7 @@ describe("sql-repository module", () => {
     let userRepository: UserRepository;
     let friendshipRepository: FriendshipRepository;
     const connect =  async (repository: Connectable) =>
-        await repository.connect(getConfiguration(3306));
+        await repository.connect(getConfiguration());
 
     beforeEach(() => {
         const result = shell.exec("docker compose up --wait");
