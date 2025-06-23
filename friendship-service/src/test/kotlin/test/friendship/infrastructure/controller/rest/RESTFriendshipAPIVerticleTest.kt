@@ -26,6 +26,7 @@ import social.friendship.infrastructure.persistence.sql.FriendshipRequestSQLRepo
 import social.friendship.infrastructure.persistence.sql.FriendshipSQLRepository
 import social.friendship.infrastructure.persistence.sql.MessageSQLRepository
 import social.friendship.infrastructure.persistence.sql.UserSQLRepository
+import social.friendship.infrastructure.probes.ReadinessProbe
 import social.friendship.social.friendship.infrastructure.serialization.jackson.Mapper
 import social.utils.http.TestRequestUtils.sendGetRequest
 import social.utils.http.TestRequestUtils.sendPostRequest
@@ -78,7 +79,7 @@ class RESTFriendshipAPIVerticleTest : DockerSQLTest() {
             kafkaProducer,
             DatabaseCredentialsImpl(localhostIP, port, database, user, password),
         )
-        api = RESTFriendshipAPIVerticleImpl(service)
+        api = RESTFriendshipAPIVerticleImpl(service, ReadinessProbe(emptyList(), emptyList()))
         deployVerticle(vertx, api)
         createTestWebClient(vertx)
     }
