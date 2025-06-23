@@ -21,8 +21,12 @@ private fun adminRegistration(
     userRepository: UserRepository,
     credentialsRepository: CredentialsRepository
 ) {
-    userRepository.save(user)
-    credentialsRepository.save(credentials)
+    if (userRepository.findById(user.id) == null) {
+        userRepository.save(user)
+    }
+    if (credentialsRepository.findById(credentials.id) == null) {
+        credentialsRepository.save(credentials)
+    }
 }
 
 fun main(args: Array<String>) {
