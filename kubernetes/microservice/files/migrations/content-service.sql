@@ -1,11 +1,11 @@
-CREATE TABLE user
+CREATE TABLE IF NOT EXISTS user
 (
     userName VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     PRIMARY KEY (email)
 );
 
-CREATE TABLE post
+CREATE TABLE IF NOT EXISTS post
 (
     id VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE post
     PRIMARY KEY (id)
 );
 
-CREATE TABLE friendship
+CREATE TABLE IF NOT EXISTS friendship
 (
     user1 VARCHAR(255) NOT NULL,
     user2 VARCHAR(255) NOT NULL,

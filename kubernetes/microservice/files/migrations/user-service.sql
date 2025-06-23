@@ -1,4 +1,4 @@
-CREATE TABLE user
+CREATE TABLE IF NOT EXISTS user
 (
     email VARCHAR(255) NOT NULL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE user
     blocked BIT(1) NOT NULL DEFAULT 0
 );
 
-CREATE TABLE credentials
+CREATE TABLE IF NOT EXISTS credentials
 (
     user_id VARCHAR(255) NOT NULL PRIMARY KEY,
     password VARCHAR(255) NOT NULL,
