@@ -8,6 +8,8 @@ set PASSWORD=password
 set USER_SERVICE=user-service
 set CONTENT_SERVICE=content-service
 set FRIENDSHIP_SERVICE=friendship-service
+set NOTIFICATION_SERVICE=notification-service
+set API_GATEWAY=api-gateway
 
 echo - Avvio Minikube...
 minikube start --memory=5926 --cpus=8
@@ -25,7 +27,7 @@ kubectl create namespace %NAMESPACE%
 kubectl config set-context --current --namespace=%NAMESPACE%
 
 echo - Installazione Kafka...
-helm install %KAFKA% bitnami/kafka ^
+helm install %KAFKA% bitnami/kafka --wait ^
   --set replicaCount=3 ^
   --set configurationOverrides."auto.create.topics.enable"=true ^
   --set configurationOverrides."default.replication.factor"=3 ^
@@ -53,3 +55,5 @@ echo - Installazione Servizi...
 helm install %USER_SERVICE% ./kubernetes/microservice --set serviceType=%USER_SERVICE%
 helm install %FRIENDSHIP_SERVICE% ./kubernetes/microservice --set serviceType=%FRIENDSHIP_SERVICE%
 helm install %CONTENT_SERVICE% ./kubernetes/microservice --set serviceType=%CONTENT_SERVICE%
+helm install %API_GATEWAY% ./kubernetes/microservice --set serviceType=%API_GATEWAY%
+helm install %NOTIFICATION_SERVICE% ./kubernetes/microservice --set serviceType=%NOTIFICATION_SERVICE%

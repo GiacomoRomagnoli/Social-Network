@@ -21,6 +21,8 @@ echo -Disinstallazione Servizi...
 helm uninstall user-service --namespace %NAMESPACE%
 helm uninstall friendship-service --namespace %NAMESPACE%
 helm uninstall content-service --namespace %NAMESPACE%
+helm uninstall api-gateway --namespace %NAMESPACE%
+helm uninstall notification-service --namespace %NAMESPACE%
 
 echo - Eliminazione namespace...
 kubectl delete namespace %NAMESPACE%
