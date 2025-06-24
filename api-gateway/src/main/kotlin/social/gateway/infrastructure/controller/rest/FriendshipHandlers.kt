@@ -8,7 +8,7 @@ import social.gateway.infrastructure.controller.rest.Utils.forwardResponse
 import social.gateway.infrastructure.controller.rest.Utils.sendUnauthorizedResponse
 
 object FriendshipHandlers {
-    private const val FRIENDSHIP_SERVICE = "friendship-service"
+    private val FRIENDSHIP_SERVICE = System.getenv("FRIENDSHIP_SERVICE_URL") ?: "friendship-service"
 
     fun getFriendships(context: RoutingContext, webClient: WebClient) {
         val email = context.pathParam(Endpoint.EMAIL_PARAM)

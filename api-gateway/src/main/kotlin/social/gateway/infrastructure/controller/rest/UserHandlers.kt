@@ -11,7 +11,7 @@ import social.gateway.infrastructure.controller.rest.Utils.sendServiceUnavailabl
 import social.gateway.infrastructure.controller.rest.Utils.sendUnauthorizedResponse
 
 object UserHandlers {
-    private const val USER_SERVICE = "user-service"
+    private val USER_SERVICE = System.getenv("USER_SERVICE_URL") ?: "user-service"
 
     fun login(context: RoutingContext, webClient: WebClient) {
         webClient

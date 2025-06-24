@@ -9,7 +9,7 @@ import social.gateway.infrastructure.controller.rest.Utils.forwardResponse
 import social.gateway.infrastructure.controller.rest.Utils.sendUnauthorizedResponse
 
 object ContentHandlers {
-    private const val CONTENT_SERVICE = "content-service"
+    private val CONTENT_SERVICE = System.getenv("CONTENT_SERVICE_URL") ?: "content-service"
 
     fun publishPost(context: RoutingContext, webClient: WebClient) {
         val body = context.body().asJsonObject()

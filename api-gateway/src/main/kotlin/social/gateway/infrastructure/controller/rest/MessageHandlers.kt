@@ -10,7 +10,7 @@ import social.gateway.infrastructure.controller.rest.Utils.sendServiceUnavailabl
 import social.gateway.infrastructure.controller.rest.Utils.sendUnauthorizedResponse
 
 object MessageHandlers {
-    private const val MESSAGE_SERVICE = "friendship-service"
+    private val MESSAGE_SERVICE = System.getenv("FRIENDSHIP_SERVICE_URL") ?: "friendship-service"
 
     fun sendMessage(context: RoutingContext, webClient: WebClient) {
         val body = context.body().asJsonObject()
