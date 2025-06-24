@@ -15,6 +15,7 @@ spec:
     metadata:
       labels: {{- include "microservice.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if and (ne .Values.serviceType "api-gateway") (ne .Values.serviceType "notification-service") }}
       initContainers:
         - name: init-db
           image: mysql:8
@@ -31,6 +32,7 @@ spec:
             limits:
               cpu: "100m"
               memory: "128Mi"
+      {{- end }}
       containers:
         - name: {{ required "Missing required value: serviceType" .Values.serviceType }}
           image: {{ index .Values.images .Values.serviceType | quote }}
@@ -38,21 +40,38 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "microservice.fullname" . }}-config
+          {{- if or (eq .Values.serviceType "api-gateway") (eq .Values.serviceType "notification-service") }}
+          env:
+            - name: GROUP_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if eq .Values.serviceType "api-gateway" }}
+            - name: USER_SERVICE_URL
+              value: {{ index .Values.urls "user-service" }}
+            - name: FRIENDSHIP_SERVICE_URL
+              value: {{ index .Values.urls "friendship-service" }}
+            - name: CONTENT_SERVICE_URL
+              value: {{ index .Values.urls "content-service" }}
+            {{- end }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           {{- with .Values.livenessProbe }}
           livenessProbe:
-            {{- toYaml . | nindent 12 }}
+            httpGet:
+              path: {{ .httpGet.path }}
+              port: {{ .httpGet.port }}
+              scheme: {{- if or (eq $.Values.serviceType "api-gateway") (eq $.Values.serviceType "notification-service") }} HTTPS {{- else }} {{ .httpGet.scheme | default "HTTP" }} {{- end }}
           {{- end }}
           {{- with .Values.readinessProbe }}
           readinessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
+            httpGet:
+              path: {{ .httpGet.path }}
+              port: {{ .httpGet.port }}
+              scheme: {{- if or (eq $.Values.serviceType "api-gateway") (eq $.Values.serviceType "notification-service") }} HTTPS {{- else }} {{ .httpGet.scheme | default "HTTP" }} {{- end }}
           {{- end }}
       volumes:
         - name: init-script-volume

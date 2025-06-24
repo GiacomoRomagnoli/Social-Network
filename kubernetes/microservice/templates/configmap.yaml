@@ -5,9 +5,14 @@ metadata:
   labels:
     {{- include "microservice.labels" . | nindent 4 }}
 data:
+  {{- if and (ne .Values.serviceType "api-gateway") (ne .Values.serviceType "notification-service") }}
   MYSQL_DATABASE: {{ index .Values.databaseNames .Values.serviceType }}
+  {{- end }}
   {{- range $key, $val := .Values.env }}
-    {{- if and $val (ne $key "MYSQL_DATABASE") }}
+    {{- if and $val
+              (ne $key "MYSQL_DATABASE")
+              (or (and (ne $.Values.serviceType "api-gateway") (ne $.Values.serviceType "notification-service"))
+                  (or (eq $key "KAFKA_HOST") (eq $key "KAFKA_PORT"))) }}
   {{ $key }}: "{{ $val }}"
     {{- end }}
   {{- end }}

@@ -10,11 +10,18 @@ images:
   user-service: giacomoromagnoli4/user-service:latest
   friendship-service: giacomoromagnoli4/friendship-service:latest
   content-service: giacomoromagnoli4/content-service:latest
+  api-gateway: giacomoromagnoli4/api-gateway:latest
+  notification-service: giacomoromagnoli4/notification-service:latest
 
 databaseNames:
   user-service: user
   friendship-service: friendship
   content-service: content
+
+urls:
+  user-service: user-service-microservice
+  friendship-service: friendship-service-microservice
+  content-service: content-service-microservice
 
 image:
   pullPolicy: IfNotPresent
