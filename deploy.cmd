@@ -57,3 +57,8 @@ helm install %FRIENDSHIP_SERVICE% ./kubernetes/microservice --set serviceType=%F
 helm install %CONTENT_SERVICE% ./kubernetes/microservice --set serviceType=%CONTENT_SERVICE%
 helm install %API_GATEWAY% ./kubernetes/microservice --set serviceType=%API_GATEWAY%
 helm install %NOTIFICATION_SERVICE% ./kubernetes/microservice --set serviceType=%NOTIFICATION_SERVICE%
+
+echo - Installazione degli Ingress...
+helm install ingress ./kubernetes/ingress
+
+minikube tunnel

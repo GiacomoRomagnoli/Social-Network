@@ -1,0 +1,9 @@
+apiGateway:
+  host: api.social.local
+  serviceName: api-gateway-microservice
+  servicePort: 8080
+
+notificationService:
+  host: ws.social.local
+  serviceName: notification-service-microservice
+  servicePort: 8080
